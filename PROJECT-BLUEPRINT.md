@@ -49,12 +49,15 @@ Completed:
 - branded pre-signing and already-signed result UI
 - server-only Stripe Checkout and signature-verified webhook routes
 - duplicate-safe Stripe payment recording migration
+- a real free/paid content boundary: the browser receives a snapshot and flag labels, while clause translations, consequences, and next steps remain server-side
+- a 256-bit anonymous recovery key stored only as a SHA-256 hash, with a private `/report/[contractId]` recovery experience
+- paid report retrieval that checks both the recovery key and recorded payment state before returning the full analysis
+- payment return handling that preserves the recovery key in session storage and briefly polls for delayed webhooks
 - environment template, health route, security headers, and GitHub Actions CI
 - passing tests, ESLint, TypeScript, production build, and production dependency audit
 
 Not yet completed:
 
-- paid full-report generation and delivery
 - Stripe test-mode Product, Price, secrets, and webhook registration
 - reconciling the SQL-editor-applied migration with Supabase CLI migration history
 - anonymous-upload ownership claim mechanism
@@ -70,12 +73,12 @@ Not yet completed:
 
 Detailed instructions: [`IMPLEMENTATION-GUIDE.md`](./IMPLEMENTATION-GUIDE.md)
 
-1. Design and implement the paid full report before enabling Checkout.
-2. Add durable rate limiting, bot protection, account recovery, and background jobs.
+1. Add durable rate limiting and bot protection before exposing the Gemini-backed endpoint.
+2. Add optional account-based recovery and background jobs.
 3. Configure Stripe test mode and exercise successful, duplicate, delayed, failed, and tampered webhook cases.
 4. Add privacy, retention, deletion, monitoring, refund, and support operations.
 5. Deploy a non-production preview and complete security and end-to-end verification before launch.
 
 ## Current external-action boundary
 
-The code is backed up in the private `oceanstew-blip/explain-my-contract` GitHub repository, and the new schema was applied and verified in Supabase. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.
+The earlier payment schema and the paid-report recovery schema were applied and verified in Supabase. The recovery verification returned `true` for the recovery column, hash constraint, unique index, new service-role function permission, blocked public roles, and disabled legacy service-role signature. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.

@@ -29,6 +29,13 @@ export function getCheckoutEnvironment() {
   });
 }
 
+export function getReportEnvironment() {
+  return readEnvironment({
+    NEXT_PUBLIC_SUPABASE_URL: z.url(),
+    SUPABASE_SECRET_KEY: nonEmptyString,
+  });
+}
+
 export function getStripeWebhookEnvironment() {
   return readEnvironment({
     STRIPE_SECRET_KEY: nonEmptyString.startsWith("sk_"),

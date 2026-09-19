@@ -12,7 +12,9 @@ type SubmissionState =
   | {
       status: "success";
       intent: AnalysisIntent;
-      result: AnalysisResult;
+      contractId: string;
+      recoveryToken: string;
+      result: AnalysisPreview;
     };
 
 type AnalysisItem = {
@@ -38,180 +40,94 @@ type AnalysisResult = {
   informational_notice?: string;
 };
 
+type AnalysisPreview = Omit<AnalysisResult, "detailed_analysis"> & {
+  flag_previews: Array<Pick<AnalysisItem, "headline" | "location">>;
+};
+
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
-function ResultsPanel({
+
+function PreviewPanel({
   intent,
   result,
+  reportUrl,
   onReset,
 }: {
   intent: AnalysisIntent;
-  result: AnalysisResult;
+  result: AnalysisPreview;
+  reportUrl: string;
   onReset: () => void;
 }) {
   const isAlreadySigned = intent === "already_signed";
-  const hasFindings = result.detailed_analysis.length > 0;
 
   return (
     <section aria-live="polite" className="text-left">
       <div className="border-b border-brand-border bg-white px-6 py-7 sm:px-9">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-bright">
-          {isAlreadySigned
-            ? "What the heck did I just sign?"
-            : "What the heck am I signing?"}
+          Your free contract snapshot
         </p>
-        <h2 className="mt-3 max-w-2xl font-fraunces text-3xl font-semibold leading-tight text-brand-indigo sm:text-4xl">
-          {isAlreadySigned
-            ? "Understand what your signature committed you to."
-            : "Know exactly what your signature will commit you to."}
+        <h2 className="mt-3 font-fraunces text-3xl font-semibold text-brand-indigo sm:text-4xl">
+          {result.total_flags === 0
+            ? "No matching flags surfaced in this scan."
+            : `${result.total_flags} ${result.total_flags === 1 ? "clause deserves" : "clauses deserve"} a closer look.`}
         </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-brand-muted sm:text-base">
-          {isAlreadySigned
-            ? "Here are the clauses that shape your exits, deadlines, liability, and dispute options."
-            : "Here are the clauses worth understanding and questioning before you put your name on the page."}
+        <p className="mt-3 text-sm leading-6 text-brand-muted sm:text-base">
+          The full report explains what each clause says, what it means for you,
+          and {isAlreadySigned ? "what the contract still allows" : "what you may want to question before signing"}.
         </p>
-
-        <div className="mt-6 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-brand-indigo px-4 py-2 text-sm font-bold text-white">
-            {result.total_flags} {result.total_flags === 1 ? "flag" : "flags"}
-          </span>
-          {result.categories_found.map((category) => (
-            <span
-              className="rounded-full border border-brand-border bg-brand-canvas px-3 py-1.5 text-xs font-bold text-brand-indigo"
-              key={category}
-            >
-              {category}
-            </span>
-          ))}
-        </div>
       </div>
 
-      <div className="space-y-4 px-4 py-5 sm:px-6 sm:py-7">
-        <section className="overflow-hidden rounded-2xl border border-brand-border bg-white shadow-sm">
-          <div className="border-b border-brand-border bg-brand-indigo px-5 py-5 text-white sm:px-6">
-            <p className="text-xs font-bold uppercase tracking-[0.15em] text-brand-canvas-deep">
-              The deal in plain English
-            </p>
-            <h3 className="mt-2 font-fraunces text-2xl font-semibold sm:text-3xl">
-              {isAlreadySigned
-                ? "This is what you signed."
-                : "This is what you’re signing."}
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-brand-canvas">
-              {result.agreement_snapshot.agreement_type} · Provided by{" "}
-              {result.agreement_snapshot.provider}
-            </p>
-            <p className="mt-1 text-sm leading-6 text-brand-canvas-deep">
-              {result.agreement_snapshot.term}
-            </p>
-          </div>
-
-          <div className="grid gap-px bg-brand-border md:grid-cols-3">
-            {[
-              ["What you get", result.agreement_snapshot.what_you_get],
-              ["What you pay", result.agreement_snapshot.what_you_pay],
-              [
-                "What your signature commits you to",
-                result.agreement_snapshot.what_you_commit_to,
-              ],
-            ].map(([label, items]) => (
-              <div className="bg-white px-5 py-5" key={label as string}>
-                <h4 className="text-xs font-bold uppercase tracking-[0.14em] text-brand-bright">
-                  {label as string}
-                </h4>
-                <ul className="mt-3 space-y-2 text-sm leading-6 text-brand-ink">
-                  {(items as string[]).map((item) => (
-                    <li className="flex gap-2" key={item}>
-                      <span
-                        aria-hidden="true"
-                        className="font-bold text-brand-action"
-                      >
-                        →
-                      </span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {hasFindings ? (
-          result.detailed_analysis.map((item, index) => (
-            <details
-              className="group overflow-hidden rounded-2xl border border-brand-border bg-white shadow-sm open:shadow-md"
-              key={`${item.location}-${item.headline}`}
-              open={index === 0}
-            >
-              <summary className="flex cursor-pointer list-none items-start justify-between gap-5 px-5 py-5 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-action [&::-webkit-details-marker]:hidden">
-                <span>
-                  <span className="block font-fraunces text-xl font-semibold leading-tight text-brand-indigo">
-                    {item.headline}
-                  </span>
-                  <span className="mt-1.5 block text-xs font-bold uppercase tracking-[0.12em] text-brand-muted">
-                    {item.location}
-                  </span>
-                </span>
-                <span
-                  aria-hidden="true"
-                  className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-canvas text-xl font-semibold text-brand-action transition-transform group-open:rotate-45"
-                >
-                  +
-                </span>
-              </summary>
-
-              <div className="grid gap-px border-t border-brand-border bg-brand-border sm:grid-cols-3">
-                <div className="bg-brand-canvas px-5 py-5">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-bright">
-                    The legal gibberish
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-brand-ink">
-                    {item.legal_gibberish}
-                  </p>
-                </div>
-                <div className="bg-white px-5 py-5">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-bright">
-                    What your signature means
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-brand-ink">
-                    {item.danger}
-                  </p>
-                </div>
-                <div className="bg-brand-canvas-deep px-5 py-5">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-indigo">
-                    {isAlreadySigned
-                      ? "What the contract still lets you do"
-                      : "What to question before signing"}
-                  </p>
-                  <p className="mt-2 text-sm font-medium leading-6 text-brand-ink">
-                    {item.fix}
-                  </p>
-                </div>
-              </div>
-            </details>
-          ))
-        ) : (
-          <div className="rounded-2xl border border-brand-border bg-white px-6 py-8 text-center">
-            <h3 className="font-fraunces text-2xl font-semibold text-brand-indigo">
-              No matching flags found
-            </h3>
-            <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-brand-muted">
-              This first pass did not find clauses in the categories this tool
-              scans. That is not a guarantee that the contract is risk-free.
-            </p>
-          </div>
-        )}
-
-        {isAlreadySigned && result.informational_notice ? (
-          <p className="rounded-xl border border-brand-border bg-white px-4 py-3 text-xs font-semibold leading-5 text-brand-muted">
-            {result.informational_notice}
+      <div className="space-y-5 px-5 py-6 sm:px-7">
+        <div className="rounded-2xl border border-brand-border bg-white px-5 py-5">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-bright">
+            The deal in plain English
           </p>
-        ) : null}
+          <h3 className="mt-2 font-fraunces text-2xl font-semibold text-brand-indigo">
+            {result.agreement_snapshot.agreement_type}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-brand-ink">
+            Provided by {result.agreement_snapshot.provider} · {result.agreement_snapshot.term}
+          </p>
+        </div>
 
-        <div className="flex justify-center pt-2">
+        {result.flag_previews.map((item) => (
+          <div
+            className="flex items-center justify-between gap-5 rounded-2xl border border-brand-border bg-white px-5 py-4"
+            key={`${item.location}-${item.headline}`}
+          >
+            <div>
+              <p className="font-fraunces text-lg font-semibold text-brand-indigo">
+                {item.headline}
+              </p>
+              <p className="mt-1 text-xs font-bold uppercase tracking-[0.1em] text-brand-muted">
+                {item.location}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-brand-canvas px-3 py-1.5 text-xs font-bold text-brand-action">
+              In full report
+            </span>
+          </div>
+        ))}
+
+        <div className="rounded-2xl bg-brand-indigo px-6 py-6 text-white">
+          <h3 className="font-fraunces text-2xl font-semibold">
+            Your private report link is ready.
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-brand-canvas">
+            Save this link. It is the key to this report and will show the full
+            analysis after payment. Do not share it.
+          </p>
+          <a
+            className="mt-5 inline-flex rounded-full bg-brand-action px-6 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-brand-indigo focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            href={reportUrl}
+          >
+            Open and save my report
+          </a>
+        </div>
+
+        <div className="flex justify-center">
           <button
-            className="rounded-full border-2 border-brand-action bg-white px-6 py-2.5 text-sm font-bold text-brand-action transition hover:bg-brand-canvas-deep focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action"
+            className="text-sm font-bold text-brand-action underline underline-offset-4"
             type="button"
             onClick={onReset}
           >
@@ -292,20 +208,29 @@ export default function Home() {
       });
       const result = (await response.json()) as {
         error?: string;
+        contract_id?: string;
+        recovery_token?: string;
         intent?: AnalysisIntent;
-        tease?: AnalysisResult;
+        tease?: AnalysisPreview;
       };
 
       if (!response.ok) {
         throw new Error(result.error || "The contract could not be analyzed.");
       }
 
-      if (!result.intent || !result.tease) {
+      if (
+        !result.contract_id ||
+        !result.recovery_token ||
+        !result.intent ||
+        !result.tease
+      ) {
         throw new Error("The analysis response was incomplete. Try again.");
       }
 
       setSubmission({
         status: "success",
+        contractId: result.contract_id,
+        recoveryToken: result.recovery_token,
         intent: result.intent,
         result: result.tease,
       });
@@ -440,9 +365,10 @@ export default function Home() {
               </p>
             </div>
           ) : submission.status === "success" ? (
-            <ResultsPanel
+            <PreviewPanel
               intent={submission.intent}
               result={submission.result}
+              reportUrl={`/report/${submission.contractId}#token=${encodeURIComponent(submission.recoveryToken)}`}
               onReset={resetFile}
             />
           ) : (

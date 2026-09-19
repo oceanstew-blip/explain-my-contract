@@ -6,6 +6,7 @@ import { PDFParse } from "pdf-parse";
 import { z } from "zod";
 
 import {
+  createAnalysisPreview,
   getAnalysisConfig,
   validateAnalysisResult,
 } from "@/lib/analysis-config";
@@ -21,6 +22,10 @@ import {
   withGeminiRetry,
 } from "@/lib/gemini-retry";
 import { getAnalysisEnvironment } from "@/lib/server-env";
+import {
+  createReportRecoveryToken,
+  hashReportRecoveryToken,
+} from "@/lib/report-access";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
@@ -207,13 +212,18 @@ export async function POST(request: Request): Promise<Response> {
       environment.SUPABASE_SECRET_KEY,
     );
 
+    const preview = createAnalysisPreview(validatedResult);
+    const recoveryToken = createReportRecoveryToken();
+
     const { data: contractId, error: contractError } = await supabaseAdmin.rpc(
       "create_contract_analysis",
       {
         p_file_name: sanitizeFileName(uploadedValue.name),
+        p_full_report: validatedResult,
         p_page_count: pageCount,
+        p_recovery_token_hash: hashReportRecoveryToken(recoveryToken),
         p_intent: intent,
-        p_tease_summary: validatedResult,
+        p_tease_summary: preview,
       },
     );
 
@@ -230,12 +240,13 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json(
       {
         contract_id: contractId,
+        recovery_token: recoveryToken,
         checkout_token:
           checkoutTokenSecret && checkoutTokenSecret.length >= 32
             ? createContractAccessToken(contractId, checkoutTokenSecret)
             : undefined,
         intent,
-        tease: validatedResult,
+        tease: preview,
       },
       {
         status: 201,

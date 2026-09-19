@@ -47,6 +47,33 @@ const modelResultSchema = z
     }
   });
 
+export type AnalysisResult = z.infer<typeof modelResultSchema> & {
+  informational_notice?: string;
+};
+
+export type AnalysisPreview = {
+  agreement_snapshot: AnalysisResult["agreement_snapshot"];
+  total_flags: number;
+  categories_found: string[];
+  flag_previews: Array<Pick<AnalysisResult["detailed_analysis"][number], "headline" | "location">>;
+  informational_notice?: string;
+};
+
+export function createAnalysisPreview(result: AnalysisResult): AnalysisPreview {
+  return {
+    agreement_snapshot: result.agreement_snapshot,
+    total_flags: result.total_flags,
+    categories_found: result.categories_found,
+    flag_previews: result.detailed_analysis.map(({ headline, location }) => ({
+      headline,
+      location,
+    })),
+    ...(result.informational_notice
+      ? { informational_notice: result.informational_notice }
+      : {}),
+  };
+}
+
 const modelJsonSchema = {
   type: "object",
   additionalProperties: false,

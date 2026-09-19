@@ -79,8 +79,8 @@ export async function POST(request: Request): Promise<Response> {
         line_items: [{ price: environment.STRIPE_PRICE_ID, quantity: 1 }],
         metadata: { contract_id: contractId },
         payment_intent_data: { metadata: { contract_id: contractId } },
-        success_url: `${environment.APP_BASE_URL}/?payment=success`,
-        cancel_url: `${environment.APP_BASE_URL}/?payment=cancelled`,
+        success_url: `${environment.APP_BASE_URL}/report/${contractId}?payment=success`,
+        cancel_url: `${environment.APP_BASE_URL}/report/${contractId}?payment=cancelled`,
       },
       { idempotencyKey: `contract-checkout:${contractId}:${version}` },
     );
