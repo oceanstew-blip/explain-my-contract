@@ -508,10 +508,10 @@ export default function Home() {
           <Image
             alt="Tami Stewart Consults"
             className="brand-mark"
-            height={62}
+            height={124}
             priority
             src="/brand/tami-stewart-consults-logo.svg"
-            width={210}
+            width={288}
           />
         </a>
         <nav className="header-nav" aria-label="Primary navigation">
@@ -866,7 +866,7 @@ export default function Home() {
       <footer className="site-footer" id="meet-tami">
         <div className="section-shell footer-grid">
           <div className="footer-brand">
-            <Image alt="Tami Stewart Consults" height={64} loading="eager" src="/brand/tami-stewart-consults-logo.svg" width={220} />
+            <Image alt="Tami Stewart Consults" height={124} loading="eager" src="/brand/tami-stewart-consults-logo.svg" width={288} />
             <p>Understand the contract. Know what it means for you.</p>
           </div>
           <nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><a href="#faq">FAQ</a><a href="https://tamistewartconsults.com">Meet Tami</a></nav>
