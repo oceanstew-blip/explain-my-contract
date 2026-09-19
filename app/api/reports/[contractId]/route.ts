@@ -9,7 +9,14 @@ import {
   jsonResponse,
   logServerFailure,
 } from "@/lib/request-observability";
-import { verifyReportRecoveryToken } from "@/lib/report-access";
+import {
+  hashReportRecoveryToken,
+  verifyReportRecoveryToken,
+} from "@/lib/report-access";
+import {
+  deleteUnpaidReport,
+  ReportDeletionUnavailableError,
+} from "@/lib/report-deletion";
 import { createReportDelivery } from "@/lib/report-delivery";
 import { getReportEnvironment } from "@/lib/server-env";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
@@ -18,6 +25,11 @@ export const runtime = "nodejs";
 
 const contractIdSchema = z.uuid();
 
+function recoveryTokenFrom(request: Request): string {
+  const authorization = request.headers.get("authorization") ?? "";
+  return authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+}
+
 export async function GET(
   request: Request,
   context: { params: Promise<{ contractId: string }> },
@@ -25,10 +37,7 @@ export async function GET(
   const requestId = getRequestId(request.headers);
   const { contractId: rawContractId } = await context.params;
   const parsedContractId = contractIdSchema.safeParse(rawContractId);
-  const authorization = request.headers.get("authorization") ?? "";
-  const recoveryToken = authorization.startsWith("Bearer ")
-    ? authorization.slice(7)
-    : "";
+  const recoveryToken = recoveryTokenFrom(request);
 
   if (!parsedContractId.success || !recoveryToken) {
     return errorResponse(requestId, "This report link is invalid.", 403);
@@ -98,6 +107,63 @@ export async function GET(
       requestId,
       "The report could not be retrieved.",
       500,
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ contractId: string }> },
+): Promise<Response> {
+  const requestId = getRequestId(request.headers);
+  const { contractId: rawContractId } = await context.params;
+  const parsedContractId = contractIdSchema.safeParse(rawContractId);
+  const recoveryToken = recoveryTokenFrom(request);
+
+  if (!parsedContractId.success || !recoveryToken) {
+    return errorResponse(requestId, "This report link is invalid.", 403);
+  }
+
+  try {
+    const environment = getReportEnvironment();
+    const supabase = createSupabaseAdmin(
+      environment.NEXT_PUBLIC_SUPABASE_URL,
+      environment.SUPABASE_SECRET_KEY,
+    );
+    const result = await deleteUnpaidReport(supabase, {
+      contractId: parsedContractId.data,
+      recoveryTokenHash: hashReportRecoveryToken(recoveryToken),
+    });
+
+    if (result === "invalid") {
+      return errorResponse(requestId, "This report link is invalid.", 403);
+    }
+    if (result === "protected") {
+      return errorResponse(
+        requestId,
+        "Reports connected to payment activity require support-assisted deletion.",
+        409,
+      );
+    }
+
+    return jsonResponse(
+      requestId,
+      { deleted: true },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (error) {
+    logServerFailure({
+      event: "report_deletion_failed",
+      requestId,
+      route: "/api/reports/[contractId]",
+      error,
+    });
+    return errorResponse(
+      requestId,
+      error instanceof ReportDeletionUnavailableError
+        ? "Report deletion is temporarily unavailable."
+        : "The report could not be deleted.",
+      503,
     );
   }
 }

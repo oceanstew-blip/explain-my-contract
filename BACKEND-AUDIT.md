@@ -21,6 +21,7 @@ Audit date: 2026-09-19
 - Added validated request IDs to every API response, browser-visible support IDs, and structured failure logs that deliberately omit error messages, stacks, contract text, recovery tokens, and secrets.
 - Added a bounded Gemini per-attempt timeout and browser-request abort propagation while the durable worker architecture remains behind its privacy and deployment gate.
 - Split liveness from readiness: `/api/health` reports process life, while `/api/ready` fails closed on unsafe configuration or unavailable Supabase and validates Stripe configuration only when payments are enabled.
+- Added an atomic, recovery-token-authorized deletion path for unpaid reports. It refuses deletion when any payment state or Stripe identifier requires financial-record handling and shows an explicit irreversible-action confirmation in the browser.
 - Upgraded Vitest from a vulnerable release to 4.1.11; `npm audit` then reported zero known vulnerabilities.
 
 ## Launch blockers
@@ -35,7 +36,7 @@ Audit date: 2026-09-19
 1. **PDF parsing is synchronous in the request.** Larger or pathological PDFs can consume memory and execution time. The durable design is specified in `BACKGROUND-JOBS-DESIGN.md`, but implementation is gated on a worker host and encrypted temporary-payload retention decision.
 2. **There is no file malware scan or OCR path.** Image-only PDFs fail, while crafted PDFs rely solely on the parser's safety.
 3. **External monitoring is not connected.** Request IDs and redacted structured errors now provide safe correlation, but the application still needs latency metrics, an error-monitoring sink, and actionable alerts before launch.
-4. **Privacy operations are undefined.** Set retention, deletion, consent, incident-response, and vendor-processing policies before handling real customer contracts at scale.
+4. **Privacy operations are incomplete.** Users can delete unpaid reports, but automatic retention, paid-record deletion, consent records, incident response, and vendor-processing rules still require approval before handling real customer contracts at scale.
 
 ### Medium
 
@@ -67,3 +68,5 @@ The payment-state migration was applied to the `Legal Review` production databas
 The paid-report recovery migration was also applied on 2026-09-19. Direct verification returned `true` for all seven recovery checks: the recovery hash column, hash constraint, partial unique index, service-role access to the new six-argument transaction function, blocked `anon` and `authenticated` access, and revoked service-role access to the legacy four-argument function.
 
 The durable rate-limit migration was applied on 2026-09-19. Direct verification confirmed that the table exists with RLS enabled, `anon` and `authenticated` cannot read it or execute the function, `service_role` has only the required table and function access, an allowance of two requests produces allow/allow/block results, and the transactional test leaves no row behind.
+
+The unpaid-report deletion function was applied on 2026-09-19. Transactional verification confirmed that a wrong recovery hash is rejected, a matching unpaid contract and analysis are deleted atomically, a paid contract is protected, only `service_role` can execute the function, and all synthetic verification rows were rolled back.

@@ -52,10 +52,12 @@ type ReportResponse = {
 export default function ReportClient({ contractId }: { contractId: string }) {
   const [state, setState] = useState<
     | { status: "loading" }
+    | { status: "deleted" }
     | { status: "error"; message: string }
     | { status: "ready"; data: ReportResponse; token: string }
   >({ status: "loading" });
   const [checkoutPending, setCheckoutPending] = useState(false);
+  const [deletePending, setDeletePending] = useState(false);
 
   useEffect(() => {
     const storageKey = `explain-my-contract:${contractId}`;
@@ -138,6 +140,46 @@ export default function ReportClient({ contractId }: { contractId: string }) {
     }
   }
 
+  async function deleteReport(token: string) {
+    const confirmed = window.confirm(
+      "Permanently delete this unpaid report? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    setDeletePending(true);
+    try {
+      const response = await fetch(
+        `/api/reports/${encodeURIComponent(contractId)}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      const body = (await response.json()) as {
+        deleted?: boolean;
+        error?: string;
+        request_id?: string;
+      };
+      if (!response.ok || !body.deleted) {
+        throw new Error(apiErrorMessage(body, "The report could not be deleted."));
+      }
+
+      window.sessionStorage.removeItem(`explain-my-contract:${contractId}`);
+      window.history.replaceState(null, "", window.location.pathname);
+      setState({ status: "deleted" });
+    } catch (error) {
+      setState({
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "The report could not be deleted.",
+      });
+    } finally {
+      setDeletePending(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-brand-canvas px-5 py-12 text-brand-ink sm:px-8">
       <div className="mx-auto max-w-3xl">
@@ -145,6 +187,15 @@ export default function ReportClient({ contractId }: { contractId: string }) {
 
         {state.status === "loading" ? (
           <p className="mt-12 rounded-2xl bg-white px-6 py-8">Opening your private report…</p>
+        ) : state.status === "deleted" ? (
+          <div className="mt-12 rounded-2xl border border-brand-border bg-white px-6 py-8">
+            <h1 className="font-fraunces text-3xl font-semibold text-brand-indigo">
+              Your unpaid report was deleted.
+            </h1>
+            <p className="mt-3 text-sm text-brand-ink">
+              The report and its recovery link no longer work.
+            </p>
+          </div>
         ) : state.status === "error" ? (
           <div className="mt-12 rounded-2xl border border-red-200 bg-white px-6 py-8">
             <h1 className="font-fraunces text-3xl font-semibold text-brand-indigo">We couldn’t open this report.</h1>
@@ -199,6 +250,21 @@ export default function ReportClient({ contractId }: { contractId: string }) {
                   ) : (
                     <p className="mt-4 text-sm font-bold text-brand-muted">Secure checkout is not open yet.</p>
                   )}
+                </div>
+              ) : null}
+
+              {state.data.payment_status === "unpaid" ? (
+                <div className="border-t border-brand-border pt-5">
+                  <button
+                    className="text-sm font-bold text-red-800 underline decoration-red-300 underline-offset-4 disabled:opacity-60"
+                    disabled={deletePending}
+                    type="button"
+                    onClick={() => deleteReport(state.token)}
+                  >
+                    {deletePending
+                      ? "Deleting unpaid report…"
+                      : "Permanently delete this unpaid report"}
+                  </button>
                 </div>
               ) : null}
             </div>

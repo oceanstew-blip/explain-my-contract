@@ -60,6 +60,7 @@ Completed:
 - production configuration guards that reject Turnstile test keys, test mode, and localhost hostname allowlists
 - request correlation IDs on every API response, support IDs in browser-visible errors, and structured server failures that omit error messages, stacks, contract text, and secrets
 - separate liveness and fail-closed readiness endpoints; readiness validates production-safe configuration, payment configuration when enabled, and bounded Supabase connectivity without contacting Gemini or Stripe
+- recovery-token-authorized permanent deletion for unpaid, non-Stripe-linked reports, with paid and payment-linked records held for a separate support-assisted process
 - environment template, health route, security headers, and GitHub Actions CI
 - passing tests, ESLint, TypeScript, production build, and production dependency audit
 
@@ -71,7 +72,7 @@ Not yet completed:
 - anonymous-upload ownership claim mechanism
 - account/recovery flow
 - background job processing
-- privacy retention and deletion workflow
+- automatic retention schedules and a paid-record deletion policy
 - external error monitoring, metrics, and alerting
 - deployment
 - Stripe test-mode end-to-end tests
@@ -98,4 +99,4 @@ The current request path parses the uploaded PDF in memory and does not intentio
 
 ## Current external-action boundary
 
-The payment, paid-report recovery, and durable rate-limit schemas were applied and verified in Supabase. Rate-limit verification confirmed RLS, blocked public-role access, service-role-only function execution, correct allow/allow/block behavior, and clean rollback of the synthetic test row. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.
+The payment, paid-report recovery, durable rate-limit, and unpaid-report deletion schemas were applied and verified in Supabase. Deletion verification confirmed invalid-token rejection, atomic unpaid report deletion, paid-record protection, service-role-only execution, and clean rollback of all synthetic rows. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.

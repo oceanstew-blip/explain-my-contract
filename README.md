@@ -10,6 +10,7 @@ An educational Next.js application that translates a PDF contract into plain lan
 - Turnstile and a durable Supabase-backed rate limiter protect the Gemini-backed analysis endpoint.
 - API responses include correlation IDs; user-visible failures show a support ID while server logs omit error messages, stacks, uploaded contract text, and secrets.
 - `/api/health` is a liveness check; `/api/ready` validates safe configuration and bounded Supabase connectivity for protected preview and production health probes.
+- A private recovery link can permanently delete an unpaid report after explicit confirmation; payment-linked records fail closed for support-assisted handling.
 - Stripe Checkout and signed webhooks are implemented behind `STRIPE_CHECKOUT_ENABLED=false`.
 - Payment must remain disabled until a paid report is actually generated and unlocked.
 - Nothing in this folder is deployed automatically merely because the code exists locally.
