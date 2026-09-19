@@ -10,6 +10,7 @@ import {
 } from "@/lib/request-observability";
 import { getStripeWebhookEnvironment } from "@/lib/server-env";
 import { createStripe } from "@/lib/stripe";
+import { paymentStateChangeFromEvent } from "@/lib/stripe-payment-state";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
@@ -35,10 +36,11 @@ export async function POST(request: Request): Promise<Response> {
 
   let environment: ReturnType<typeof getStripeWebhookEnvironment>;
   let event: Stripe.Event;
+  let stripe: ReturnType<typeof createStripe>;
 
   try {
     environment = getStripeWebhookEnvironment();
-    const stripe = createStripe(environment.STRIPE_SECRET_KEY);
+    stripe = createStripe(environment.STRIPE_SECRET_KEY);
     event = stripe.webhooks.constructEvent(
       await request.text(),
       signature,
@@ -57,33 +59,53 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const session = paidCheckoutSession(event);
-    if (!session) return jsonResponse(requestId, { received: true });
-
-    const contractId = session.metadata?.contract_id;
-    if (!contractId || contractId !== session.client_reference_id) {
-      return errorResponse(
-        requestId,
-        "Checkout session is missing contract metadata.",
-        400,
-      );
-    }
-
     const supabase = createSupabaseAdmin(
       environment.NEXT_PUBLIC_SUPABASE_URL,
       environment.SUPABASE_SECRET_KEY,
     );
-    const { error } = await supabase.rpc("record_paid_checkout", {
-      p_contract_id: contractId,
+
+    if (session) {
+      const contractId = session.metadata?.contract_id;
+      if (!contractId || contractId !== session.client_reference_id) {
+        return errorResponse(
+          requestId,
+          "Checkout session is missing contract metadata.",
+          400,
+        );
+      }
+
+      const { error } = await supabase.rpc("record_paid_checkout", {
+        p_contract_id: contractId,
+        p_event_id: event.id,
+        p_event_type: event.type,
+        p_payment_intent_id:
+          typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : session.payment_intent?.id ?? null,
+        p_session_id: session.id,
+      });
+
+      if (error) throw new Error(`Could not record payment: ${error.message}`);
+      return jsonResponse(requestId, { received: true });
+    }
+
+    const stateChange = await paymentStateChangeFromEvent(
+      event,
+      (chargeId) => stripe.charges.retrieve(chargeId),
+    );
+    if (!stateChange) return jsonResponse(requestId, { received: true });
+
+    const { error } = await supabase.rpc("record_payment_state_event", {
       p_event_id: event.id,
       p_event_type: event.type,
-      p_payment_intent_id:
-        typeof session.payment_intent === "string"
-          ? session.payment_intent
-          : session.payment_intent?.id ?? null,
-      p_session_id: session.id,
+      p_payment_intent_id: stateChange.paymentIntentId ?? null,
+      p_session_id: stateChange.sessionId ?? null,
+      p_target_status: stateChange.targetStatus,
     });
 
-    if (error) throw new Error(`Could not record payment: ${error.message}`);
+    if (error) {
+      throw new Error(`Could not record payment state: ${error.message}`);
+    }
     return jsonResponse(requestId, { received: true });
   } catch (error) {
     logServerFailure({

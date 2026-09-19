@@ -61,8 +61,9 @@ Completed:
 - request correlation IDs on every API response, support IDs in browser-visible errors, and structured server failures that omit error messages, stacks, contract text, and secrets
 - separate liveness and fail-closed readiness endpoints; readiness validates production-safe configuration, payment configuration when enabled, and bounded Supabase connectivity without contacting Gemini or Stripe
 - recovery-token-authorized permanent deletion for unpaid, non-Stripe-linked reports, with paid and payment-linked records held for a separate support-assisted process
-- reconciled Supabase CLI migration history for all four verified production migrations
+- reconciled Supabase CLI migration history for every verified production migration
 - fail-closed stored-report validation before delivery, including checkout-capability suppression for disabled, paid, refunded, or unknown payment states
+- duplicate-safe failed-payment, expiration, refund, partial-refund audit, and dispute transitions with server-side checkout lockout for ineligible states
 - environment template, health route, security headers, and GitHub Actions CI
 - passing tests, ESLint, TypeScript, production build, and production dependency audit
 
@@ -85,7 +86,7 @@ Detailed instructions: [`IMPLEMENTATION-GUIDE.md`](./IMPLEMENTATION-GUIDE.md)
 1. Replace the local Turnstile test keys with a production widget and deployment-specific hostname allowlist before exposing the Gemini-backed endpoint.
 2. Approve the worker host and encrypted temporary-payload retention decisions in [`BACKGROUND-JOBS-DESIGN.md`](./BACKGROUND-JOBS-DESIGN.md), then build and verify the complete queued workflow before switching the browser to it.
 3. Configure Stripe test mode and exercise successful, duplicate, delayed, failed, and tampered webhook cases.
-4. Add privacy, retention, deletion, monitoring, refund, and support operations.
+4. Add privacy, retention, deletion, monitoring, and documented refund/support operations.
 5. Deploy a non-production preview and complete security and end-to-end verification before launch.
 
 ## Pricing proposal under review
@@ -100,4 +101,4 @@ The current request path parses the uploaded PDF in memory and does not intentio
 
 ## Current external-action boundary
 
-The payment, paid-report recovery, durable rate-limit, and unpaid-report deletion schemas were applied and verified in Supabase, and all four versions now match Supabase CLI migration history. Deletion verification confirmed invalid-token rejection, atomic unpaid report deletion, paid-record protection, service-role-only execution, and clean rollback of all synthetic rows. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.
+The payment, paid-report recovery, durable rate-limit, unpaid-report deletion, payment-reversal, and payment-index schemas were applied and verified in Supabase, and every local version now matches Supabase CLI migration history. Verification covered invalid-token rejection, atomic unpaid report deletion, paid-record protection, duplicate webhook delivery, failure/refund/dispute ordering, partial-refund audit behavior, service-role-only execution, and clean rollback of all synthetic rows. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.

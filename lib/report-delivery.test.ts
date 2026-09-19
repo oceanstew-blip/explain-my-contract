@@ -77,6 +77,17 @@ describe("report delivery policy", () => {
     expect(delivery).not.toHaveProperty("checkout_token");
   });
 
+  it("does not reopen checkout automatically for disputed reports", () => {
+    const delivery = createReportDelivery({
+      ...baseInput,
+      paymentStatus: "disputed",
+    });
+
+    expect(delivery.paid).toBe(false);
+    expect(delivery.checkout_enabled).toBe(false);
+    expect(delivery).not.toHaveProperty("checkout_token");
+  });
+
   it.each([
     ["missing report", null],
     ["malformed report", { ...fullReport, detailed_analysis: [] }],

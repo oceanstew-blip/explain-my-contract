@@ -11,8 +11,8 @@ An educational Next.js application that translates a PDF contract into plain lan
 - API responses include correlation IDs; user-visible failures show a support ID while server logs omit error messages, stacks, uploaded contract text, and secrets.
 - `/api/health` is a liveness check; `/api/ready` validates safe configuration and bounded Supabase connectivity for protected preview and production health probes.
 - A private recovery link can permanently delete an unpaid report after explicit confirmation; payment-linked records fail closed for support-assisted handling.
-- Stripe Checkout and signed webhooks are implemented behind `STRIPE_CHECKOUT_ENABLED=false`.
-- Payment must remain disabled until a paid report is actually generated and unlocked.
+- Stripe Checkout, signed webhooks, paid-report unlocking, failed-payment handling, full refunds, partial-refund audit records, and disputes are implemented behind `STRIPE_CHECKOUT_ENABLED=false`.
+- Payment must remain disabled until Stripe test-mode integration, refund/support operations, and the remaining launch gates are complete.
 - Nothing in this folder is deployed automatically merely because the code exists locally.
 
 ## Local setup
@@ -38,16 +38,26 @@ This runs tests, ESLint, TypeScript, and the production webpack build. GitHub Ac
 
 The payment code is intentionally unavailable until every item below is complete:
 
-1. Implement and test the full paid report deliverable.
+1. Verify the implemented full paid report deliverable in a protected preview.
 2. Create a Stripe Product and one-time Price in test mode.
 3. Set `STRIPE_PRICE_ID`, `STRIPE_SECRET_KEY`, and a 32+ character `CHECKOUT_TOKEN_SECRET`.
-4. Register `/api/stripe/webhook` and set `STRIPE_WEBHOOK_SECRET`.
+4. Register `/api/stripe/webhook`, subscribe it to the required events below, and set `STRIPE_WEBHOOK_SECRET`.
 5. Apply the payment-state migration and verify its functions and RLS/grants.
 6. Test successful, duplicate, delayed, failed, and tampered webhook cases in Stripe test mode.
-7. Confirm refunds and customer support behavior.
+7. Confirm the implemented full-refund, partial-refund, dispute, and customer-support behavior against written policy.
 8. Only then set `STRIPE_CHECKOUT_ENABLED=true`.
 
 The browser never decides whether a payment succeeded. Only a signature-verified Stripe webhook can mark a contract paid.
+
+Required webhook events:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+- `checkout.session.expired`
+- `charge.refunded`
+- `charge.dispute.created`
+- `charge.dispute.closed`
 
 ## Deployment and GitHub
 

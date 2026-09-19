@@ -22,8 +22,9 @@ Audit date: 2026-09-19
 - Added a bounded Gemini per-attempt timeout and browser-request abort propagation while the durable worker architecture remains behind its privacy and deployment gate.
 - Split liveness from readiness: `/api/health` reports process life, while `/api/ready` fails closed on unsafe configuration or unavailable Supabase and validates Stripe configuration only when payments are enabled.
 - Added an atomic, recovery-token-authorized deletion path for unpaid reports. It refuses deletion when any payment state or Stripe identifier requires financial-record handling and shows an explicit irreversible-action confirmation in the browser.
-- Reconciled all four SQL-editor-applied migrations with Supabase CLI history without replaying schema changes.
+- Reconciled all local migrations with Supabase CLI history without replaying previously applied schema changes.
 - Added fail-closed paid-report delivery validation: stored reports and payment states must match the application schema, disabled or ineligible checkout states never receive a checkout capability, and refunded reports cannot silently reopen checkout.
+- Added duplicate-safe failed-payment, expired-session, full-refund, partial-refund audit, and dispute handling. State precedence prevents late failures or won disputes from reopening refunded reports, and the checkout route independently blocks paid, refunded, disputed, and unknown states.
 - Upgraded Vitest from a vulnerable release to 4.1.11; `npm audit` then reported zero known vulnerabilities.
 
 ## Launch blockers
@@ -41,9 +42,8 @@ Audit date: 2026-09-19
 ### Medium
 
 1. Anonymous recovery depends on possession of a private high-entropy link; there is not yet an optional email/account recovery path if that link is lost.
-2. Refund and dispute webhooks are not implemented.
-3. Webhook and Checkout routes need Stripe CLI integration tests against test mode.
-4. Readiness intentionally does not call Gemini or Stripe because those probes could spend money or create external side effects. Add provider-level monitoring and synthetic tests in the protected preview environment.
+2. Webhook and Checkout routes need Stripe CLI integration tests against test mode.
+3. Readiness intentionally does not call Gemini or Stripe because those probes could spend money or create external side effects. Add provider-level monitoring and synthetic tests in the protected preview environment.
 
 ## Intended request flow
 
@@ -70,3 +70,5 @@ The paid-report recovery migration was also applied on 2026-09-19. Direct verifi
 The durable rate-limit migration was applied on 2026-09-19. Direct verification confirmed that the table exists with RLS enabled, `anon` and `authenticated` cannot read it or execute the function, `service_role` has only the required table and function access, an allowance of two requests produces allow/allow/block results, and the transactional test leaves no row behind.
 
 The unpaid-report deletion function was applied on 2026-09-19. Transactional verification confirmed that a wrong recovery hash is rejected, a matching unpaid contract and analysis are deleted atomically, a paid contract is protected, only `service_role` can execute the function, and all synthetic verification rows were rolled back.
+
+The payment-reversal migrations were applied on 2026-09-19. Rollback-only verification confirmed failure, dispute, duplicate-event, dispute-won, full-refund, partial-refund, and late-event ordering behavior; `anon` and `authenticated` remain blocked from the state-transition function. The duplicate session index was removed, the webhook-event foreign key received a covering index, and direct index verification returned true for both repairs. Supabase's advisor rerun stalled after connecting, so the repaired conditions were verified directly rather than reported as a completed advisor rerun.

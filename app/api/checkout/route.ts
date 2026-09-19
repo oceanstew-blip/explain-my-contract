@@ -10,6 +10,7 @@ import {
   logServerFailure,
 } from "@/lib/request-observability";
 import { getCheckoutEnvironment } from "@/lib/server-env";
+import { canStartCheckout } from "@/lib/payment-status";
 import { createStripe } from "@/lib/stripe";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -62,10 +63,10 @@ export async function POST(request: Request): Promise<Response> {
     if (error || !contract) {
       return errorResponse(requestId, "Contract not found.", 404);
     }
-    if (contract.payment_status === "paid") {
+    if (!canStartCheckout(contract.payment_status)) {
       return errorResponse(
         requestId,
-        "This report has already been paid for.",
+        "Checkout is not available for this report.",
         409,
       );
     }

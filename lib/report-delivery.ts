@@ -1,18 +1,9 @@
-import { z } from "zod";
-
 import {
   createAnalysisPreview,
   validateAnalysisResult,
 } from "./analysis-config";
 import { analysisIntentSchema } from "./analysis-intent";
-
-const paymentStatusSchema = z.enum([
-  "unpaid",
-  "checkout_open",
-  "paid",
-  "failed",
-  "refunded",
-]);
+import { canStartCheckout, paymentStatusSchema } from "./payment-status";
 
 type ReportDeliveryInput = {
   contractId: string;
@@ -28,10 +19,7 @@ export function createReportDelivery(input: ReportDeliveryInput) {
   const paymentStatus = paymentStatusSchema.parse(input.paymentStatus);
   const report = validateAnalysisResult(intent, input.fullReport);
   const paid = paymentStatus === "paid";
-  const checkoutEligible = ["unpaid", "checkout_open", "failed"].includes(
-    paymentStatus,
-  );
-  const checkoutEnabled = input.checkoutEnabled && checkoutEligible;
+  const checkoutEnabled = input.checkoutEnabled && canStartCheckout(paymentStatus);
 
   return {
     contract_id: input.contractId,
