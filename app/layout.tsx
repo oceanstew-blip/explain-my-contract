@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Montserrat } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
+import "./experience.css";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -28,3 +29,4 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
+
