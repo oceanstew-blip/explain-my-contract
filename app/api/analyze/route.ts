@@ -28,6 +28,10 @@ import {
   hashReportRecoveryToken,
 } from "@/lib/report-access";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
+import {
+  parseTurnstileHostnames,
+  verifyTurnstileToken,
+} from "@/lib/turnstile";
 
 export const runtime = "nodejs";
 
@@ -105,6 +109,28 @@ export async function POST(request: Request): Promise<Response> {
       return errorResponse(
         "Confirm that you understand this is educational analysis, not legal advice.",
         400,
+      );
+    }
+
+    const turnstileToken = formData.get("turnstile_token");
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const remoteIp = forwardedFor?.split(",")[0]?.trim();
+    if (
+      typeof turnstileToken !== "string" ||
+      !(await verifyTurnstileToken({
+        token: turnstileToken,
+        secret: environment.TURNSTILE_SECRET,
+        expectedAction: "analyze_contract",
+        expectedHostnames: parseTurnstileHostnames(
+          environment.TURNSTILE_HOSTNAMES,
+        ),
+        remoteIp,
+        testMode: environment.TURNSTILE_TEST_MODE === "true",
+      }))
+    ) {
+      return errorResponse(
+        "Browser verification failed. Refresh the check and try again.",
+        403,
       );
     }
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { ChangeEvent, DragEvent, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Script from "next/script";
 
 import { ANALYSIS_DISCLAIMER_TEXT } from "@/lib/analysis-disclaimer";
 import type { AnalysisIntent } from "@/lib/analysis-intent";
@@ -46,6 +47,29 @@ type AnalysisPreview = Omit<AnalysisResult, "detailed_analysis"> & {
 };
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+
+type TurnstileWidgetId = string;
+type TurnstileApi = {
+  render: (
+    container: HTMLElement,
+    options: {
+      sitekey: string;
+      action: string;
+      callback: (token: string) => void;
+      "error-callback": () => void;
+      "expired-callback": () => void;
+    },
+  ) => TurnstileWidgetId;
+  remove: (widgetId: TurnstileWidgetId) => void;
+  reset: (widgetId: TurnstileWidgetId) => void;
+};
+
+declare global {
+  interface Window {
+    turnstile: TurnstileApi;
+  }
+}
 
 
 function PreviewPanel({
@@ -158,12 +182,39 @@ function validatePdf(selectedFile: File): string | null {
 
 export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetIdRef = useRef<TurnstileWidgetId | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [disclaimerAcknowledged, setDisclaimerAcknowledged] = useState(false);
+  const [turnstileReady, setTurnstileReady] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [submission, setSubmission] = useState<SubmissionState>({
     status: "idle",
   });
+
+  useEffect(() => {
+    if (
+      !file ||
+      !turnstileReady ||
+      !TURNSTILE_SITE_KEY ||
+      !turnstileContainerRef.current ||
+      turnstileWidgetIdRef.current
+    ) {
+      return;
+    }
+
+    turnstileWidgetIdRef.current = window.turnstile.render(
+      turnstileContainerRef.current,
+      {
+        sitekey: TURNSTILE_SITE_KEY,
+        action: "analyze_contract",
+        callback: setTurnstileToken,
+        "error-callback": () => setTurnstileToken(""),
+        "expired-callback": () => setTurnstileToken(""),
+      },
+    );
+  }, [file, turnstileReady]);
 
   function selectFile(selectedFile: File | undefined) {
     if (!selectedFile) return;
@@ -191,8 +242,13 @@ export default function Home() {
   }
 
   function resetFile() {
+    if (turnstileWidgetIdRef.current && window.turnstile) {
+      window.turnstile.remove(turnstileWidgetIdRef.current);
+      turnstileWidgetIdRef.current = null;
+    }
     setFile(null);
     setDisclaimerAcknowledged(false);
+    setTurnstileToken("");
     setSubmission({ status: "idle" });
     if (inputRef.current) inputRef.current.value = "";
   }
@@ -208,6 +264,7 @@ export default function Home() {
       "disclaimer_acknowledged",
       disclaimerAcknowledged ? "true" : "false",
     );
+    formData.set("turnstile_token", turnstileToken);
 
     try {
       const response = await fetch("/api/analyze", {
@@ -250,6 +307,11 @@ export default function Home() {
             ? error.message
             : "The contract could not be analyzed. Try again.",
       });
+    } finally {
+      if (turnstileWidgetIdRef.current && window.turnstile) {
+        window.turnstile.reset(turnstileWidgetIdRef.current);
+      }
+      setTurnstileToken("");
     }
   }
 
@@ -257,6 +319,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-brand-white text-brand-ink">
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+        strategy="afterInteractive"
+        onReady={() => setTurnstileReady(true)}
+      />
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
         <a
           className="flex items-center gap-3 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action"
@@ -407,10 +474,17 @@ export default function Home() {
                 <span>{ANALYSIS_DISCLAIMER_TEXT}</span>
               </label>
 
+              <div className="mt-5 min-h-[65px]" ref={turnstileContainerRef} />
+              {!TURNSTILE_SITE_KEY ? (
+                <p className="mt-2 text-xs font-semibold text-red-800" role="alert">
+                  Browser verification is not configured.
+                </p>
+              ) : null}
+
               <div className="mt-7 grid w-full gap-4 sm:grid-cols-2">
                 <button
                   className="rounded-2xl border-2 border-brand-action bg-white px-5 py-5 text-left font-bold text-brand-action transition hover:bg-brand-canvas-deep focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action disabled:cursor-not-allowed disabled:border-brand-border disabled:text-brand-muted disabled:opacity-60"
-                  disabled={!disclaimerAcknowledged}
+                  disabled={!disclaimerAcknowledged || !turnstileToken}
                   type="button"
                   onClick={() => processDocument("considering_signing")}
                 >
@@ -421,7 +495,7 @@ export default function Home() {
                 </button>
                 <button
                   className="rounded-2xl border-2 border-brand-action bg-brand-action px-5 py-5 text-left font-bold text-white shadow-lg shadow-brand-action/15 transition hover:border-brand-indigo hover:bg-brand-indigo focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action disabled:cursor-not-allowed disabled:border-brand-border disabled:bg-brand-muted disabled:opacity-60"
-                  disabled={!disclaimerAcknowledged}
+                  disabled={!disclaimerAcknowledged || !turnstileToken}
                   type="button"
                   onClick={() => processDocument("already_signed")}
                 >

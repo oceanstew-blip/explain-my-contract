@@ -15,14 +15,16 @@ Audit date: 2026-09-19
 - Added explicit payment states and unique Stripe identifiers.
 - Added secure response headers, a health endpoint, an environment template, Node 22 requirement, and GitHub Actions verification.
 - Added a digital-PDF limitation notice and required educational-analysis acknowledgment enforced in both the browser and `/api/analyze`.
+- Added explicit-render Cloudflare Turnstile gating for analysis, including token reset, server-side Siteverify, action/hostname enforcement, a 10-second timeout, and fail-closed behavior.
 - Upgraded Vitest from a vulnerable release to 4.1.11; `npm audit` then reported zero known vulnerabilities.
 
 ## Launch blockers
 
 ### Critical
 
-1. **No durable abuse control exists.** `/api/analyze` can spend Gemini quota for anyone who can reach it. Add a deployment-aware rate limiter and bot protection before public release.
-2. **Migration history still needs CLI reconciliation.** Both schemas were applied and verified through the authenticated Supabase SQL editor, but the local migration files are not yet represented in Supabase CLI migration history.
+1. **No durable rate limit exists.** Turnstile now protects `/api/analyze`, but repeated verified requests can still spend Gemini quota. Add a deployment-aware rate limiter before public release.
+2. **Production Turnstile credentials are not configured.** Local development uses Cloudflare's marked test response path. Create a real widget and set a deployment-specific hostname allowlist before deployment; production must use `TURNSTILE_TEST_MODE=false`.
+3. **Migration history still needs CLI reconciliation.** Both schemas were applied and verified through the authenticated Supabase SQL editor, but the local migration files are not yet represented in Supabase CLI migration history.
 
 ### High
 

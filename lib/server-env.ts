@@ -14,6 +14,9 @@ export function getAnalysisEnvironment() {
     GEMINI_MODEL: nonEmptyString.optional(),
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     SUPABASE_SECRET_KEY: nonEmptyString,
+    TURNSTILE_HOSTNAMES: nonEmptyString,
+    TURNSTILE_SECRET: nonEmptyString,
+    TURNSTILE_TEST_MODE: z.enum(["true", "false"]).default("false"),
   });
 }
 

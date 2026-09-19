@@ -55,12 +55,14 @@ Completed:
 - payment return handling that preserves the recovery key in session storage and briefly polls for delayed webhooks
 - upload copy that clearly excludes scanned/image-only PDFs
 - browser and server enforcement of an explicit educational-analysis acknowledgment
+- Cloudflare Turnstile browser verification and fail-closed server-side Siteverify checks on `/api/analyze`
 - environment template, health route, security headers, and GitHub Actions CI
 - passing tests, ESLint, TypeScript, production build, and production dependency audit
 
 Not yet completed:
 
 - Stripe test-mode Product, Price, secrets, and webhook registration
+- production Turnstile widget/sitekey/secret and deployment-specific hostname allowlist
 - reconciling the SQL-editor-applied migration with Supabase CLI migration history
 - anonymous-upload ownership claim mechanism
 - durable rate limiting and bot protection
@@ -75,7 +77,7 @@ Not yet completed:
 
 Detailed instructions: [`IMPLEMENTATION-GUIDE.md`](./IMPLEMENTATION-GUIDE.md)
 
-1. Add durable rate limiting and bot protection before exposing the Gemini-backed endpoint.
+1. Add durable rate limiting and replace the local Turnstile test keys with a production widget before exposing the Gemini-backed endpoint.
 2. Add optional account-based recovery and background jobs.
 3. Configure Stripe test mode and exercise successful, duplicate, delayed, failed, and tampered webhook cases.
 4. Add privacy, retention, deletion, monitoring, refund, and support operations.
