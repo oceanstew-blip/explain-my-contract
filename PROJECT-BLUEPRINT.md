@@ -56,6 +56,8 @@ Completed:
 - upload copy that clearly excludes scanned/image-only PDFs
 - browser and server enforcement of an explicit educational-analysis acknowledgment
 - Cloudflare Turnstile browser verification and fail-closed server-side Siteverify checks on `/api/analyze`
+- durable, Supabase-backed analysis rate limiting keyed by an HMAC of the client IP, with atomic counters and fail-closed behavior
+- production configuration guards that reject Turnstile test keys, test mode, and localhost hostname allowlists
 - environment template, health route, security headers, and GitHub Actions CI
 - passing tests, ESLint, TypeScript, production build, and production dependency audit
 
@@ -65,7 +67,6 @@ Not yet completed:
 - production Turnstile widget/sitekey/secret and deployment-specific hostname allowlist
 - reconciling the SQL-editor-applied migration with Supabase CLI migration history
 - anonymous-upload ownership claim mechanism
-- durable rate limiting and bot protection
 - account/recovery flow
 - background job processing
 - privacy retention and deletion workflow
@@ -77,7 +78,7 @@ Not yet completed:
 
 Detailed instructions: [`IMPLEMENTATION-GUIDE.md`](./IMPLEMENTATION-GUIDE.md)
 
-1. Add durable rate limiting and replace the local Turnstile test keys with a production widget before exposing the Gemini-backed endpoint.
+1. Replace the local Turnstile test keys with a production widget and deployment-specific hostname allowlist before exposing the Gemini-backed endpoint.
 2. Add optional account-based recovery and background jobs.
 3. Configure Stripe test mode and exercise successful, duplicate, delayed, failed, and tampered webhook cases.
 4. Add privacy, retention, deletion, monitoring, refund, and support operations.
@@ -95,4 +96,4 @@ The current request path parses the uploaded PDF in memory and does not intentio
 
 ## Current external-action boundary
 
-The earlier payment schema and the paid-report recovery schema were applied and verified in Supabase. The recovery verification returned `true` for the recovery column, hash constraint, unique index, new service-role function permission, blocked public roles, and disabled legacy service-role signature. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.
+The payment, paid-report recovery, and durable rate-limit schemas were applied and verified in Supabase. Rate-limit verification confirmed RLS, blocked public-role access, service-role-only function execution, correct allow/allow/block behavior, and clean rollback of the synthetic test row. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.

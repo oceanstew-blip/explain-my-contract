@@ -7,6 +7,7 @@ An educational Next.js application that translates a PDF contract into plain lan
 - PDF validation and text extraction run on the server.
 - Gemini returns schema-validated JSON with bounded retry and model fallback.
 - Supabase stores contract metadata and analysis atomically after the included migration is applied.
+- Turnstile and a durable Supabase-backed rate limiter protect the Gemini-backed analysis endpoint.
 - Stripe Checkout and signed webhooks are implemented behind `STRIPE_CHECKOUT_ENABLED=false`.
 - Payment must remain disabled until a paid report is actually generated and unlocked.
 - Nothing in this folder is deployed automatically merely because the code exists locally.
@@ -17,7 +18,8 @@ An educational Next.js application that translates a PDF contract into plain lan
 2. Run `npm ci`.
 3. Copy `.env.example` to `.env.local` and enter test credentials.
 4. Apply the Supabase migrations to the intended environment.
-5. Run `npm run dev` and open `http://localhost:3000`.
+5. Set a unique 32+ character `RATE_LIMIT_HMAC_SECRET`; never reuse a public key or browser-visible value.
+6. Run `npm run dev` and open `http://localhost:3000`.
 
 Never commit `.env.local`, a Stripe secret key, a Stripe webhook secret, a Supabase secret key, or uploaded contracts.
 

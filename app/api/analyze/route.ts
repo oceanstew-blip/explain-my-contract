@@ -12,6 +12,12 @@ import {
 } from "@/lib/analysis-config";
 import { hasAcknowledgedAnalysisDisclaimer } from "@/lib/analysis-disclaimer";
 import { analysisIntentSchema } from "@/lib/analysis-intent";
+import {
+  AnalysisRateLimitUnavailableError,
+  consumeAnalysisRateLimit,
+  getClientIp,
+  hashRateLimitIdentifier,
+} from "@/lib/analysis-rate-limit";
 import { createContractAccessToken } from "@/lib/contract-access-token";
 import {
   GeminiOutputError,
@@ -69,6 +75,19 @@ function errorResponse(message: string, status: number): Response {
   );
 }
 
+function rateLimitResponse(retryAfterSeconds: number): Response {
+  return Response.json(
+    { error: "Too many analyses were requested. Please try again later." },
+    {
+      status: 429,
+      headers: {
+        "Cache-Control": "no-store",
+        "Retry-After": String(Math.max(1, retryAfterSeconds)),
+      },
+    },
+  );
+}
+
 export async function POST(request: Request): Promise<Response> {
   const contentType = request.headers.get("content-type") ?? "";
 
@@ -113,8 +132,10 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const turnstileToken = formData.get("turnstile_token");
-    const forwardedFor = request.headers.get("x-forwarded-for");
-    const remoteIp = forwardedFor?.split(",")[0]?.trim();
+    const remoteIp = getClientIp(request.headers, process.env.NODE_ENV);
+    if (!remoteIp) {
+      return errorResponse("Client verification is unavailable.", 503);
+    }
     if (
       typeof turnstileToken !== "string" ||
       !(await verifyTurnstileToken({
@@ -159,6 +180,22 @@ export async function POST(request: Request): Promise<Response> {
 
     if (!hasPdfSignature(pdfBytes)) {
       return errorResponse("The uploaded file is not a valid PDF.", 415);
+    }
+
+    const supabaseAdmin = createSupabaseAdmin(
+      environment.NEXT_PUBLIC_SUPABASE_URL,
+      environment.SUPABASE_SECRET_KEY,
+    );
+    const rateLimit = await consumeAnalysisRateLimit(supabaseAdmin, {
+      identifierHash: hashRateLimitIdentifier(
+        remoteIp,
+        environment.RATE_LIMIT_HMAC_SECRET,
+      ),
+      maxRequests: environment.ANALYSIS_RATE_LIMIT_MAX,
+      windowSeconds: environment.ANALYSIS_RATE_LIMIT_WINDOW_SECONDS,
+    });
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.retryAfterSeconds);
     }
 
     const parser = new PDFParse({ data: pdfBytes });
@@ -245,11 +282,6 @@ export async function POST(request: Request): Promise<Response> {
       },
     );
 
-    const supabaseAdmin = createSupabaseAdmin(
-      environment.NEXT_PUBLIC_SUPABASE_URL,
-      environment.SUPABASE_SECRET_KEY,
-    );
-
     const preview = createAnalysisPreview(validatedResult);
     const recoveryToken = createReportRecoveryToken();
 
@@ -307,6 +339,13 @@ export async function POST(request: Request): Promise<Response> {
       return errorResponse(
         "The analysis service returned an incomplete result. Please try again.",
         502,
+      );
+    }
+
+    if (error instanceof AnalysisRateLimitUnavailableError) {
+      return errorResponse(
+        "Analysis is temporarily unavailable. Please try again shortly.",
+        503,
       );
     }
 
