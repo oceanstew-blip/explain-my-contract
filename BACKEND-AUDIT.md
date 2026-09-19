@@ -22,6 +22,8 @@ Audit date: 2026-09-19
 - Added a bounded Gemini per-attempt timeout and browser-request abort propagation while the durable worker architecture remains behind its privacy and deployment gate.
 - Split liveness from readiness: `/api/health` reports process life, while `/api/ready` fails closed on unsafe configuration or unavailable Supabase and validates Stripe configuration only when payments are enabled.
 - Added an atomic, recovery-token-authorized deletion path for unpaid reports. It refuses deletion when any payment state or Stripe identifier requires financial-record handling and shows an explicit irreversible-action confirmation in the browser.
+- Reconciled all four SQL-editor-applied migrations with Supabase CLI history without replaying schema changes.
+- Added fail-closed paid-report delivery validation: stored reports and payment states must match the application schema, disabled or ineligible checkout states never receive a checkout capability, and refunded reports cannot silently reopen checkout.
 - Upgraded Vitest from a vulnerable release to 4.1.11; `npm audit` then reported zero known vulnerabilities.
 
 ## Launch blockers
@@ -29,8 +31,6 @@ Audit date: 2026-09-19
 ### Critical
 
 1. **Production Turnstile credentials are not configured.** Local development uses Cloudflare's marked test response path. Create a real widget and set a deployment-specific hostname allowlist before deployment; production startup now rejects test configuration.
-2. **Migration history still needs CLI reconciliation.** The schemas were applied and verified through the authenticated Supabase SQL editor, but the local migration files are not yet represented in Supabase CLI migration history.
-
 ### High
 
 1. **PDF parsing is synchronous in the request.** Larger or pathological PDFs can consume memory and execution time. The durable design is specified in `BACKGROUND-JOBS-DESIGN.md`, but implementation is gated on a worker host and encrypted temporary-payload retention decision.

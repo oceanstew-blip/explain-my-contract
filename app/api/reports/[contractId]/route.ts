@@ -67,7 +67,7 @@ export async function GET(
 
     const { data: analysis, error: analysisError } = await supabase
       .from("analyses")
-      .select("intent, tease_summary, full_report")
+      .select("intent, full_report")
       .eq("contract_id", contractId)
       .single();
 
@@ -77,9 +77,10 @@ export async function GET(
       );
     }
 
+    const checkoutEnabled = process.env.STRIPE_CHECKOUT_ENABLED === "true";
     const checkoutTokenSecret = process.env.CHECKOUT_TOKEN_SECRET?.trim();
     const checkoutToken =
-      checkoutTokenSecret && checkoutTokenSecret.length >= 32
+      checkoutEnabled && checkoutTokenSecret && checkoutTokenSecret.length >= 32
         ? createContractAccessToken(contractId, checkoutTokenSecret)
         : undefined;
 
@@ -89,9 +90,8 @@ export async function GET(
         contractId,
         intent: analysis.intent,
         paymentStatus: contract.payment_status,
-        preview: analysis.tease_summary,
         fullReport: analysis.full_report,
-        checkoutEnabled: process.env.STRIPE_CHECKOUT_ENABLED === "true",
+        checkoutEnabled,
         checkoutToken,
       }),
       { headers: { "Cache-Control": "no-store, private" } },

@@ -61,6 +61,8 @@ Completed:
 - request correlation IDs on every API response, support IDs in browser-visible errors, and structured server failures that omit error messages, stacks, contract text, and secrets
 - separate liveness and fail-closed readiness endpoints; readiness validates production-safe configuration, payment configuration when enabled, and bounded Supabase connectivity without contacting Gemini or Stripe
 - recovery-token-authorized permanent deletion for unpaid, non-Stripe-linked reports, with paid and payment-linked records held for a separate support-assisted process
+- reconciled Supabase CLI migration history for all four verified production migrations
+- fail-closed stored-report validation before delivery, including checkout-capability suppression for disabled, paid, refunded, or unknown payment states
 - environment template, health route, security headers, and GitHub Actions CI
 - passing tests, ESLint, TypeScript, production build, and production dependency audit
 
@@ -68,7 +70,6 @@ Not yet completed:
 
 - Stripe test-mode Product, Price, secrets, and webhook registration
 - production Turnstile widget/sitekey/secret and deployment-specific hostname allowlist
-- reconciling the SQL-editor-applied migration with Supabase CLI migration history
 - anonymous-upload ownership claim mechanism
 - account/recovery flow
 - background job processing
@@ -99,4 +100,4 @@ The current request path parses the uploaded PDF in memory and does not intentio
 
 ## Current external-action boundary
 
-The payment, paid-report recovery, durable rate-limit, and unpaid-report deletion schemas were applied and verified in Supabase. Deletion verification confirmed invalid-token rejection, atomic unpaid report deletion, paid-record protection, service-role-only execution, and clean rollback of all synthetic rows. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.
+The payment, paid-report recovery, durable rate-limit, and unpaid-report deletion schemas were applied and verified in Supabase, and all four versions now match Supabase CLI migration history. Deletion verification confirmed invalid-token rejection, atomic unpaid report deletion, paid-record protection, service-role-only execution, and clean rollback of all synthetic rows. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.
