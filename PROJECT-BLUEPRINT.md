@@ -80,7 +80,7 @@ Not yet completed:
 Detailed instructions: [`IMPLEMENTATION-GUIDE.md`](./IMPLEMENTATION-GUIDE.md)
 
 1. Replace the local Turnstile test keys with a production widget and deployment-specific hostname allowlist before exposing the Gemini-backed endpoint.
-2. Add optional account-based recovery and background jobs.
+2. Approve the worker host and encrypted temporary-payload retention decisions in [`BACKGROUND-JOBS-DESIGN.md`](./BACKGROUND-JOBS-DESIGN.md), then build and verify the complete queued workflow before switching the browser to it.
 3. Configure Stripe test mode and exercise successful, duplicate, delayed, failed, and tampered webhook cases.
 4. Add privacy, retention, deletion, monitoring, refund, and support operations.
 5. Deploy a non-production preview and complete security and end-to-end verification before launch.

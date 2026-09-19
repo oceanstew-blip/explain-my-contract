@@ -271,6 +271,10 @@ export async function POST(request: Request): Promise<Response> {
             },
           ],
           config: {
+            abortSignal: request.signal,
+            httpOptions: {
+              timeout: environment.GEMINI_REQUEST_TIMEOUT_MS,
+            },
             systemInstruction: analysisConfig.systemPrompt,
             temperature: 0,
             maxOutputTokens: 8_000,

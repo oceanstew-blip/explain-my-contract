@@ -19,6 +19,7 @@ Audit date: 2026-09-19
 - Added an atomic Supabase-backed analysis rate limiter using HMAC-hashed client IPs, bounded configuration, `Retry-After` responses, and fail-closed database error handling.
 - Added production startup guards that reject Turnstile test mode, Cloudflare test credentials, and localhost hostname allowlists.
 - Added validated request IDs to every API response, browser-visible support IDs, and structured failure logs that deliberately omit error messages, stacks, contract text, recovery tokens, and secrets.
+- Added a bounded Gemini per-attempt timeout and browser-request abort propagation while the durable worker architecture remains behind its privacy and deployment gate.
 - Upgraded Vitest from a vulnerable release to 4.1.11; `npm audit` then reported zero known vulnerabilities.
 
 ## Launch blockers
@@ -30,7 +31,7 @@ Audit date: 2026-09-19
 
 ### High
 
-1. **PDF parsing is synchronous in the request.** Larger or pathological PDFs can consume memory and execution time. Move analysis into a durable job/queue before meaningful traffic.
+1. **PDF parsing is synchronous in the request.** Larger or pathological PDFs can consume memory and execution time. The durable design is specified in `BACKGROUND-JOBS-DESIGN.md`, but implementation is gated on a worker host and encrypted temporary-payload retention decision.
 2. **There is no file malware scan or OCR path.** Image-only PDFs fail, while crafted PDFs rely solely on the parser's safety.
 3. **External monitoring is not connected.** Request IDs and redacted structured errors now provide safe correlation, but the application still needs latency metrics, an error-monitoring sink, and actionable alerts before launch.
 4. **Privacy operations are undefined.** Set retention, deletion, consent, incident-response, and vendor-processing policies before handling real customer contracts at scale.

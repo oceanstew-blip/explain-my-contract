@@ -20,6 +20,12 @@ export function getAnalysisEnvironment() {
       .max(86400),
     GEMINI_API_KEY: nonEmptyString,
     GEMINI_MODEL: nonEmptyString.optional(),
+    GEMINI_REQUEST_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(120_000)
+      .default(45_000),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: nonEmptyString,
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     RATE_LIMIT_HMAC_SECRET: nonEmptyString.min(32),
