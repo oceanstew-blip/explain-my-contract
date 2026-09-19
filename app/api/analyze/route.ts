@@ -311,7 +311,7 @@ export async function POST(request: Request): Promise<Response> {
     const preview = createAnalysisPreview(validatedResult);
     const recoveryToken = createReportRecoveryToken();
 
-    const { data: contractId, error: contractError } = await supabaseAdmin.rpc(
+    const { data: createdContracts, error: contractError } = await supabaseAdmin.rpc(
       "create_contract_analysis",
       {
         p_file_name: sanitizeFileName(uploadedValue.name),
@@ -323,13 +323,22 @@ export async function POST(request: Request): Promise<Response> {
       },
     );
 
-    if (contractError || typeof contractId !== "string") {
+    const createdContract = Array.isArray(createdContracts)
+      ? createdContracts[0]
+      : undefined;
+    if (
+      contractError ||
+      !createdContract ||
+      typeof createdContract.contract_id !== "string" ||
+      typeof createdContract.report_expires_at !== "string"
+    ) {
       throw new Error(
         `Could not create contract and analysis records: ${
           contractError?.message ?? "unknown database error"
         }`,
       );
     }
+    const contractId = createdContract.contract_id;
 
     const checkoutTokenSecret = process.env.CHECKOUT_TOKEN_SECRET?.trim();
 
@@ -337,6 +346,7 @@ export async function POST(request: Request): Promise<Response> {
       requestId,
       {
         contract_id: contractId,
+        report_expires_at: createdContract.report_expires_at,
         recovery_token: recoveryToken,
         checkout_token:
           checkoutTokenSecret && checkoutTokenSecret.length >= 32

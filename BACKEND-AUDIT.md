@@ -37,7 +37,12 @@ Audit date: 2026-09-19
 1. **PDF parsing is synchronous in the request.** Larger or pathological PDFs can consume memory and execution time. The durable design is specified in `BACKGROUND-JOBS-DESIGN.md`, but implementation is gated on a worker host and encrypted temporary-payload retention decision.
 2. **There is no file malware scan or OCR path.** Image-only PDFs fail, while crafted PDFs rely solely on the parser's safety.
 3. **External monitoring is not connected.** Request IDs and redacted structured errors now provide safe correlation, but the application still needs latency metrics, an error-monitoring sink, and actionable alerts before launch.
-4. **Privacy operations are incomplete.** Users can delete unpaid reports, but automatic retention, paid-record deletion, consent records, incident response, and vendor-processing rules still require approval before handling real customer contracts at scale.
+4. **Privacy operations still require operational approval.** The code now has
+   separate retention metadata, fail-closed report expiry, and bounded automatic
+   cleanup for report content, financial metadata, and webhook idempotency rows.
+   The periods and scheduled job still require protected-preview verification,
+   monitoring, and written privacy/accounting/refund/incident procedures before
+   handling real customer contracts at scale.
 
 ### Medium
 

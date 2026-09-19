@@ -30,6 +30,7 @@ const baseInput = {
   fullReport,
   checkoutEnabled: true,
   checkoutToken: "checkout-capability",
+  reportExpiresAt: "2026-09-20T16:00:00.000Z",
 };
 
 describe("report delivery policy", () => {
@@ -106,6 +107,16 @@ describe("report delivery policy", () => {
       createReportDelivery({
         ...baseInput,
         paymentStatus: "mystery",
+      }),
+    ).toThrow();
+  });
+
+  it("fails closed for invalid expiration metadata", () => {
+    expect(() =>
+      createReportDelivery({
+        ...baseInput,
+        paymentStatus: "paid",
+        reportExpiresAt: "not-a-date",
       }),
     ).toThrow();
   });

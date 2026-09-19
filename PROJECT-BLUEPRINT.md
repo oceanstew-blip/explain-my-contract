@@ -74,7 +74,8 @@ Not yet completed:
 - anonymous-upload ownership claim mechanism
 - account/recovery flow
 - background job processing
-- automatic retention schedules and a paid-record deletion policy
+- preview-environment verification of the automatic retention schedule and its
+  operational alerts
 - external error monitoring, metrics, and alerting
 - deployment
 - Stripe test-mode end-to-end tests
@@ -86,7 +87,8 @@ Detailed instructions: [`IMPLEMENTATION-GUIDE.md`](./IMPLEMENTATION-GUIDE.md)
 1. Replace the local Turnstile test keys with a production widget and deployment-specific hostname allowlist before exposing the Gemini-backed endpoint.
 2. Approve the worker host and encrypted temporary-payload retention decisions in [`BACKGROUND-JOBS-DESIGN.md`](./BACKGROUND-JOBS-DESIGN.md), then build and verify the complete queued workflow before switching the browser to it.
 3. Configure Stripe test mode and exercise successful, duplicate, delayed, failed, and tampered webhook cases.
-4. Add privacy, retention, deletion, monitoring, and documented refund/support operations.
+4. Verify privacy and retention behavior in preview, then add monitoring and
+   documented incident/refund/support operations.
 5. Deploy a non-production preview and complete security and end-to-end verification before launch.
 
 ## Pricing proposal under review
@@ -95,9 +97,24 @@ The supplied business note proposes one-time pricing by page count: $5 for 1–5
 
 Before implementing tiers, verify current Stripe and Gemini costs, define what happens when page count and extracted-text volume diverge, and decide whether documents above 50 pages are supported. Create separate server-controlled Stripe Price IDs for approved tiers rather than calculating an arbitrary client-controlled charge.
 
-## Retention decision still required
+## Retention policy selected for preview verification
 
-The current request path parses the uploaded PDF in memory and does not intentionally store the PDF bytes. Supabase stores contract metadata, the free preview, and the full analysis. A 30-day deletion rule is a useful proposal, but it cannot be implemented responsibly until the product defines separate retention periods for unpaid previews, paid reports, payment/refund records, webhook idempotency records, and user-requested deletion. The recovery experience must state the selected expiry before automatic deletion is enabled.
+The request path parses the uploaded PDF in memory and does not intentionally
+store the PDF bytes. The migration uses these conservative product-policy
+defaults, which still require review against the written privacy, accounting,
+refund, and dispute procedures before launch:
+
+| Record | Retention | Expiration behavior |
+| --- | --- | --- |
+| Unpaid analysis and preview | 24 hours | Access and checkout fail closed at the timestamp; the analysis and payment-free contract row are deleted by the daily bounded cleanup. |
+| Paid analysis and preview | 30 days after confirmed payment | Payment extends an unexpired report to at least 30 days; expiry removes the analysis, file name, and recovery hash while retaining the minimum financial record. |
+| Payment/refund/dispute metadata | 7 years after the latest recorded financial event | Retained separately from report content, then deleted in a bounded batch after expiry. This is an operational default, not a universal legal requirement. |
+| Stripe webhook idempotency rows | 400 days | Deleted in bounded batches; the window comfortably exceeds Stripe's ordinary retry period while preserving long-tail payment-event audit protection. |
+
+`expire_due_records(500)` is service-role-only and runs daily at 03:17 UTC via
+Supabase Cron. Each run is recorded in `cron.job_run_details`. Preview
+verification must cover expiry-boundary access, cleanup counts, job history,
+failure alerting, and rollback-safe synthetic records before production use.
 
 ## Current external-action boundary
 

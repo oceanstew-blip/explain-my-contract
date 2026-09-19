@@ -12,6 +12,11 @@ import {
 import { getCheckoutEnvironment } from "@/lib/server-env";
 import { canStartCheckout } from "@/lib/payment-status";
 import { createStripe } from "@/lib/stripe";
+import {
+  addCalendarYears,
+  isReportExpired,
+  parseReportExpiration,
+} from "@/lib/report-retention";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
@@ -47,7 +52,6 @@ export async function POST(request: Request): Promise<Response> {
         403,
       );
     }
-
     const supabase = createSupabaseAdmin(
       environment.NEXT_PUBLIC_SUPABASE_URL,
       environment.SUPABASE_SECRET_KEY,
@@ -55,7 +59,7 @@ export async function POST(request: Request): Promise<Response> {
     const { data: contract, error } = await supabase
       .from("contracts")
       .select(
-        "id, payment_status, stripe_session_id, stripe_checkout_version",
+        "id, payment_status, stripe_session_id, stripe_checkout_version, report_expires_at, report_expired_at",
       )
       .eq("id", contractId)
       .single();
@@ -68,6 +72,24 @@ export async function POST(request: Request): Promise<Response> {
         requestId,
         "Checkout is not available for this report.",
         409,
+      );
+    }
+    if (
+      contract.report_expired_at !== null ||
+      isReportExpired(contract.report_expires_at)
+    ) {
+      return errorResponse(
+        requestId,
+        "Checkout is not available because this report has expired.",
+        410,
+      );
+    }
+    const reportExpiration = parseReportExpiration(contract.report_expires_at);
+    if (reportExpiration.getTime() - Date.now() < 30 * 60 * 1_000) {
+      return errorResponse(
+        requestId,
+        "Checkout is not available this close to report expiration.",
+        410,
       );
     }
 
@@ -93,6 +115,7 @@ export async function POST(request: Request): Promise<Response> {
         line_items: [{ price: environment.STRIPE_PRICE_ID, quantity: 1 }],
         metadata: { contract_id: contractId },
         payment_intent_data: { metadata: { contract_id: contractId } },
+        expires_at: Math.floor(reportExpiration.getTime() / 1_000),
         success_url: `${environment.APP_BASE_URL}/report/${contractId}?payment=success`,
         cancel_url: `${environment.APP_BASE_URL}/report/${contractId}?payment=cancelled`,
       },
@@ -107,6 +130,7 @@ export async function POST(request: Request): Promise<Response> {
         payment_status: "checkout_open",
         stripe_checkout_version: version,
         stripe_session_id: checkout.id,
+        financial_records_expires_at: addCalendarYears(new Date(), 7).toISOString(),
       })
       .eq("id", contractId)
       .eq("stripe_checkout_version", contract.stripe_checkout_version ?? 0)

@@ -4,6 +4,7 @@ import {
 } from "./analysis-config";
 import { analysisIntentSchema } from "./analysis-intent";
 import { canStartCheckout, paymentStatusSchema } from "./payment-status";
+import { parseReportExpiration } from "./report-retention";
 
 type ReportDeliveryInput = {
   contractId: string;
@@ -12,6 +13,7 @@ type ReportDeliveryInput = {
   fullReport: unknown;
   checkoutEnabled: boolean;
   checkoutToken?: string;
+  reportExpiresAt: string;
 };
 
 export function createReportDelivery(input: ReportDeliveryInput) {
@@ -20,6 +22,7 @@ export function createReportDelivery(input: ReportDeliveryInput) {
   const report = validateAnalysisResult(intent, input.fullReport);
   const paid = paymentStatus === "paid";
   const checkoutEnabled = input.checkoutEnabled && canStartCheckout(paymentStatus);
+  const reportExpiresAt = parseReportExpiration(input.reportExpiresAt).toISOString();
 
   return {
     contract_id: input.contractId,
@@ -29,6 +32,7 @@ export function createReportDelivery(input: ReportDeliveryInput) {
     preview: createAnalysisPreview(report),
     ...(paid ? { report } : {}),
     checkout_enabled: checkoutEnabled,
+    report_expires_at: reportExpiresAt,
     ...(checkoutEnabled && input.checkoutToken
       ? { checkout_token: input.checkoutToken }
       : {}),

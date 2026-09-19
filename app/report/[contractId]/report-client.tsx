@@ -40,6 +40,7 @@ type ReportResponse = {
   payment_status: string;
   checkout_enabled: boolean;
   checkout_token?: string;
+  report_expires_at: string;
   preview: {
     agreement_snapshot: AnalysisReport["agreement_snapshot"];
     total_flags: number;
@@ -212,6 +213,12 @@ export default function ReportClient({ contractId }: { contractId: string }) {
               </h1>
               <p className="mt-3 text-sm text-brand-canvas">
                 {state.data.preview.total_flags} {state.data.preview.total_flags === 1 ? "flag" : "flags"} found
+              </p>
+              <p className="mt-2 text-xs text-brand-canvas">
+                Available until {new Intl.DateTimeFormat(undefined, {
+                  dateStyle: "long",
+                  timeStyle: "short",
+                }).format(new Date(state.data.report_expires_at))}
               </p>
             </header>
 

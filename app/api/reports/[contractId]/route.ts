@@ -18,6 +18,7 @@ import {
   ReportDeletionUnavailableError,
 } from "@/lib/report-deletion";
 import { createReportDelivery } from "@/lib/report-delivery";
+import { isReportExpired } from "@/lib/report-retention";
 import { getReportEnvironment } from "@/lib/server-env";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -52,7 +53,7 @@ export async function GET(
     const contractId = parsedContractId.data;
     const { data: contract, error: contractError } = await supabase
       .from("contracts")
-      .select("id, payment_status, recovery_token_hash")
+      .select("id, payment_status, recovery_token_hash, report_expires_at, report_expired_at")
       .eq("id", contractId)
       .single();
 
@@ -63,6 +64,16 @@ export async function GET(
       !verifyReportRecoveryToken(recoveryToken, contract.recovery_token_hash)
     ) {
       return errorResponse(requestId, "This report link is invalid.", 403);
+    }
+    if (
+      contract.report_expired_at !== null ||
+      isReportExpired(contract.report_expires_at)
+    ) {
+      return errorResponse(
+        requestId,
+        "This report has expired and its analysis is no longer available.",
+        410,
+      );
     }
 
     const { data: analysis, error: analysisError } = await supabase
@@ -93,6 +104,7 @@ export async function GET(
         fullReport: analysis.full_report,
         checkoutEnabled,
         checkoutToken,
+        reportExpiresAt: contract.report_expires_at,
       }),
       { headers: { "Cache-Control": "no-store, private" } },
     );

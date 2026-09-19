@@ -26,6 +26,20 @@ An educational Next.js application that translates a PDF contract into plain lan
 
 Never commit `.env.local`, a Stripe secret key, a Stripe webhook secret, a Supabase secret key, or uploaded contracts.
 
+## Retention defaults
+
+- Unpaid reports: 24 hours.
+- Paid reports: at least 30 days after confirmed payment.
+- Payment, refund, and dispute metadata: 7 years after the latest recorded
+  financial event.
+- Stripe webhook idempotency records: 400 days.
+
+The report endpoint and Checkout fail closed at `report_expires_at`. A daily
+Supabase Cron job calls the service-role-only `expire_due_records(500)` function
+to remove expired content in bounded batches. These are preview-stage product
+defaults, not legal advice; verify them against written privacy and accounting
+procedures before launch.
+
 ## Verification
 
 ```bash
