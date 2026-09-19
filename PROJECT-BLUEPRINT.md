@@ -62,6 +62,8 @@ Completed:
 - separate liveness and fail-closed readiness endpoints; readiness validates production-safe configuration, payment configuration when enabled, and bounded Supabase connectivity without contacting Gemini or Stripe
 - recovery-token-authorized permanent deletion for unpaid, non-Stripe-linked reports, with paid and payment-linked records held for a separate support-assisted process
 - reconciled Supabase CLI migration history for every verified production migration
+- a checked-in baseline for the original manually created schema, allowing the
+  complete migration chain to replay from an empty local Supabase database
 - fail-closed stored-report validation before delivery, including checkout-capability suppression for disabled, paid, refunded, or unknown payment states
 - duplicate-safe failed-payment, expiration, refund, partial-refund audit, and dispute transitions with server-side checkout lockout for ineligible states
 - environment template, health route, security headers, and GitHub Actions CI
@@ -119,3 +121,10 @@ failure alerting, and rollback-safe synthetic records before production use.
 ## Current external-action boundary
 
 The payment, paid-report recovery, durable rate-limit, unpaid-report deletion, payment-reversal, and payment-index schemas were applied and verified in Supabase, and every local version now matches Supabase CLI migration history. Verification covered invalid-token rejection, atomic unpaid report deletion, paid-record protection, duplicate webhook delivery, failure/refund/dispute ordering, partial-refund audit behavior, service-role-only execution, and clean rollback of all synthetic rows. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.
+
+The original hosted schema predated CLI migration tracking. Migration
+`20260919000000_baseline_existing_schema.sql` now reproduces those original
+tables, constraints, indexes, RLS policies, and grants locally. Its hosted
+history entry was marked applied without executing schema SQL. A clean local
+database successfully replayed the baseline and every later migration; only the
+retention migration remains pending on the hosted project.

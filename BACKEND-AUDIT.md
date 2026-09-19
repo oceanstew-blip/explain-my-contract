@@ -77,3 +77,11 @@ The durable rate-limit migration was applied on 2026-09-19. Direct verification 
 The unpaid-report deletion function was applied on 2026-09-19. Transactional verification confirmed that a wrong recovery hash is rejected, a matching unpaid contract and analysis are deleted atomically, a paid contract is protected, only `service_role` can execute the function, and all synthetic verification rows were rolled back.
 
 The payment-reversal migrations were applied on 2026-09-19. Rollback-only verification confirmed failure, dispute, duplicate-event, dispute-won, full-refund, partial-refund, and late-event ordering behavior; `anon` and `authenticated` remain blocked from the state-transition function. The duplicate session index was removed, the webhook-event foreign key received a covering index, and direct index verification returned true for both repairs. Supabase's advisor rerun stalled after connecting, so the repaired conditions were verified directly rather than reported as a completed advisor rerun.
+
+The missing pre-CLI schema baseline was reconstructed from a read-only hosted
+schema export and added as migration `20260919000000`. Its hosted migration
+history marker was reconciled without executing the baseline SQL remotely. A
+fresh local Supabase database then replayed the baseline and all later
+migrations through `20260919240000`; rollback-only retention tests passed and
+local Supabase Advisors reported no issues. The retention migration has not
+been applied to the hosted project.
