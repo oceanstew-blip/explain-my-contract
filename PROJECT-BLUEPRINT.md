@@ -59,6 +59,7 @@ Completed:
 - durable, Supabase-backed analysis rate limiting keyed by an HMAC of the client IP, with atomic counters and fail-closed behavior
 - production configuration guards that reject Turnstile test keys, test mode, and localhost hostname allowlists
 - request correlation IDs on every API response, support IDs in browser-visible errors, and structured server failures that omit error messages, stacks, contract text, and secrets
+- separate liveness and fail-closed readiness endpoints; readiness validates production-safe configuration, payment configuration when enabled, and bounded Supabase connectivity without contacting Gemini or Stripe
 - environment template, health route, security headers, and GitHub Actions CI
 - passing tests, ESLint, TypeScript, production build, and production dependency audit
 

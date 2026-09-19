@@ -20,6 +20,7 @@ Audit date: 2026-09-19
 - Added production startup guards that reject Turnstile test mode, Cloudflare test credentials, and localhost hostname allowlists.
 - Added validated request IDs to every API response, browser-visible support IDs, and structured failure logs that deliberately omit error messages, stacks, contract text, recovery tokens, and secrets.
 - Added a bounded Gemini per-attempt timeout and browser-request abort propagation while the durable worker architecture remains behind its privacy and deployment gate.
+- Split liveness from readiness: `/api/health` reports process life, while `/api/ready` fails closed on unsafe configuration or unavailable Supabase and validates Stripe configuration only when payments are enabled.
 - Upgraded Vitest from a vulnerable release to 4.1.11; `npm audit` then reported zero known vulnerabilities.
 
 ## Launch blockers
@@ -41,7 +42,7 @@ Audit date: 2026-09-19
 1. Anonymous recovery depends on possession of a private high-entropy link; there is not yet an optional email/account recovery path if that link is lost.
 2. Refund and dispute webhooks are not implemented.
 3. Webhook and Checkout routes need Stripe CLI integration tests against test mode.
-4. The health endpoint proves the process is alive, not that Supabase, Gemini, and Stripe are ready.
+4. Readiness intentionally does not call Gemini or Stripe because those probes could spend money or create external side effects. Add provider-level monitoring and synthetic tests in the protected preview environment.
 
 ## Intended request flow
 
