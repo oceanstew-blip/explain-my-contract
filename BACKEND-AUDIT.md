@@ -23,7 +23,7 @@ Audit date: 2026-09-19
 1. **No paid deliverable exists.** Checkout must stay disabled until payment reliably produces or unlocks a full report.
 2. **No durable abuse control exists.** `/api/analyze` can spend Gemini quota for anyone who can reach it. Add a deployment-aware rate limiter and bot protection before public release.
 3. **No account or recovery model exists.** Anonymous results are held only in the current browser session; a refresh loses the capability to recover them.
-4. **The migration is not applied to the live Supabase project.** The revised analysis route depends on `create_contract_analysis`.
+4. **Migration history still needs CLI reconciliation.** The schema was applied and verified through the authenticated Supabase SQL editor, but the local migration file is not yet represented in Supabase CLI migration history.
 
 ### High
 
@@ -52,4 +52,8 @@ Audit date: 2026-09-19
 
 ## GitHub finding
 
-At audit time, `legal-review/` was entirely untracked inside the local `tsc-proposal-studio` Git repository. Therefore none of this application was backed up to GitHub. It needs a separate private repository and an intentional initial push.
+At audit time, `legal-review/` was entirely untracked inside the local `tsc-proposal-studio` Git repository. It is now its own Git repository and is backed up to the private `oceanstew-blip/explain-my-contract` GitHub repository.
+
+## Supabase verification
+
+The payment-state migration was applied to the `Legal Review` production database on 2026-09-19. Direct verification returned `true` for all seven checks: payment columns, `analyses.intent NOT NULL`, the intent constraint, webhook-event RLS, both locked-down service-role functions, and both unique Stripe indexes. The rerun Security Advisor reported zero errors and zero warnings. Its one informational note is intentional: `stripe_webhook_events` has RLS enabled with no public policies because only the server-side `service_role` is granted access.

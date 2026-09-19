@@ -56,14 +56,13 @@ Not yet completed:
 
 - paid full-report generation and delivery
 - Stripe test-mode Product, Price, secrets, and webhook registration
-- applying and verifying the new migration in Supabase
+- reconciling the SQL-editor-applied migration with Supabase CLI migration history
 - anonymous-upload ownership claim mechanism
 - durable rate limiting and bot protection
 - account/recovery flow
 - background job processing
 - privacy retention and deletion workflow
 - monitoring and alerting
-- separate private GitHub repository
 - deployment
 - Stripe test-mode end-to-end tests
 
@@ -71,14 +70,12 @@ Not yet completed:
 
 Detailed instructions: [`IMPLEMENTATION-GUIDE.md`](./IMPLEMENTATION-GUIDE.md)
 
-1. Put this folder in its own private GitHub repository.
-2. Review and apply the included Supabase migration, then verify functions, constraints, grants, and RLS.
-3. Design and implement the paid full report before enabling Checkout.
-4. Add durable rate limiting, bot protection, account recovery, and background jobs.
-5. Configure Stripe test mode and exercise successful, duplicate, delayed, failed, and tampered webhook cases.
-6. Add privacy, retention, deletion, monitoring, refund, and support operations.
-7. Deploy a non-production preview and complete security and end-to-end verification before launch.
+1. Design and implement the paid full report before enabling Checkout.
+2. Add durable rate limiting, bot protection, account recovery, and background jobs.
+3. Configure Stripe test mode and exercise successful, duplicate, delayed, failed, and tampered webhook cases.
+4. Add privacy, retention, deletion, monitoring, refund, and support operations.
+5. Deploy a non-production preview and complete security and end-to-end verification before launch.
 
 ## Current external-action boundary
 
-Nothing is deployed. Stripe resources were not created, payment remains disabled, the new migration was not applied to Supabase, and no GitHub repository was created or pushed in this pass. Those external changes remain behind explicit approval.
+The code is backed up in the private `oceanstew-blip/explain-my-contract` GitHub repository, and the new schema was applied and verified in Supabase. Nothing is deployed, Stripe resources were not created, and payment remains disabled. Production deployment and Stripe activation remain behind explicit approval.
