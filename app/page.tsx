@@ -4,6 +4,7 @@ import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Script from "next/script";
 
+import { apiErrorMessage } from "@/lib/api-error";
 import { ANALYSIS_DISCLAIMER_TEXT } from "@/lib/analysis-disclaimer";
 import type { AnalysisIntent } from "@/lib/analysis-intent";
 
@@ -273,6 +274,7 @@ export default function Home() {
       });
       const result = (await response.json()) as {
         error?: string;
+        request_id?: string;
         contract_id?: string;
         recovery_token?: string;
         intent?: AnalysisIntent;
@@ -280,7 +282,9 @@ export default function Home() {
       };
 
       if (!response.ok) {
-        throw new Error(result.error || "The contract could not be analyzed.");
+        throw new Error(
+          apiErrorMessage(result, "The contract could not be analyzed."),
+        );
       }
 
       if (

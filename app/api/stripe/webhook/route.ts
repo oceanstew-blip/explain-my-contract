@@ -2,18 +2,17 @@ import "server-only";
 
 import type Stripe from "stripe";
 
+import {
+  errorResponse,
+  getRequestId,
+  jsonResponse,
+  logServerFailure,
+} from "@/lib/request-observability";
 import { getStripeWebhookEnvironment } from "@/lib/server-env";
 import { createStripe } from "@/lib/stripe";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
-
-function errorResponse(message: string, status: number): Response {
-  return Response.json(
-    { error: message },
-    { status, headers: { "Cache-Control": "no-store" } },
-  );
-}
 
 function paidCheckoutSession(event: Stripe.Event): Stripe.Checkout.Session | null {
   if (
@@ -28,8 +27,11 @@ function paidCheckoutSession(event: Stripe.Event): Stripe.Checkout.Session | nul
 }
 
 export async function POST(request: Request): Promise<Response> {
+  const requestId = getRequestId(request.headers);
   const signature = request.headers.get("stripe-signature");
-  if (!signature) return errorResponse("Missing Stripe signature.", 400);
+  if (!signature) {
+    return errorResponse(requestId, "Missing Stripe signature.", 400);
+  }
 
   let environment: ReturnType<typeof getStripeWebhookEnvironment>;
   let event: Stripe.Event;
@@ -43,17 +45,27 @@ export async function POST(request: Request): Promise<Response> {
       environment.STRIPE_WEBHOOK_SECRET,
     );
   } catch (error) {
-    console.warn("Stripe webhook signature verification failed", { error });
-    return errorResponse("Invalid Stripe signature.", 400);
+    logServerFailure({
+      level: "warn",
+      event: "stripe_signature_verification_failed",
+      requestId,
+      route: "/api/stripe/webhook",
+      error,
+    });
+    return errorResponse(requestId, "Invalid Stripe signature.", 400);
   }
 
   try {
     const session = paidCheckoutSession(event);
-    if (!session) return Response.json({ received: true });
+    if (!session) return jsonResponse(requestId, { received: true });
 
     const contractId = session.metadata?.contract_id;
     if (!contractId || contractId !== session.client_reference_id) {
-      return errorResponse("Checkout session is missing contract metadata.", 400);
+      return errorResponse(
+        requestId,
+        "Checkout session is missing contract metadata.",
+        400,
+      );
     }
 
     const supabase = createSupabaseAdmin(
@@ -72,9 +84,18 @@ export async function POST(request: Request): Promise<Response> {
     });
 
     if (error) throw new Error(`Could not record payment: ${error.message}`);
-    return Response.json({ received: true });
+    return jsonResponse(requestId, { received: true });
   } catch (error) {
-    console.error("Stripe webhook processing failed", { error });
-    return errorResponse("Webhook could not be processed.", 500);
+    logServerFailure({
+      event: "stripe_webhook_processing_failed",
+      requestId,
+      route: "/api/stripe/webhook",
+      error,
+    });
+    return errorResponse(
+      requestId,
+      "Webhook could not be processed.",
+      500,
+    );
   }
 }

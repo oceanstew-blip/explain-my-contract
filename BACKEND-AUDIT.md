@@ -18,6 +18,7 @@ Audit date: 2026-09-19
 - Added explicit-render Cloudflare Turnstile gating for analysis, including token reset, server-side Siteverify, action/hostname enforcement, a 10-second timeout, and fail-closed behavior.
 - Added an atomic Supabase-backed analysis rate limiter using HMAC-hashed client IPs, bounded configuration, `Retry-After` responses, and fail-closed database error handling.
 - Added production startup guards that reject Turnstile test mode, Cloudflare test credentials, and localhost hostname allowlists.
+- Added validated request IDs to every API response, browser-visible support IDs, and structured failure logs that deliberately omit error messages, stacks, contract text, recovery tokens, and secrets.
 - Upgraded Vitest from a vulnerable release to 4.1.11; `npm audit` then reported zero known vulnerabilities.
 
 ## Launch blockers
@@ -31,7 +32,7 @@ Audit date: 2026-09-19
 
 1. **PDF parsing is synchronous in the request.** Larger or pathological PDFs can consume memory and execution time. Move analysis into a durable job/queue before meaningful traffic.
 2. **There is no file malware scan or OCR path.** Image-only PDFs fail, while crafted PDFs rely solely on the parser's safety.
-3. **There is no end-to-end observability.** Add structured request IDs, redacted error reporting, latency metrics, and alerts without logging contract text.
+3. **External monitoring is not connected.** Request IDs and redacted structured errors now provide safe correlation, but the application still needs latency metrics, an error-monitoring sink, and actionable alerts before launch.
 4. **Privacy operations are undefined.** Set retention, deletion, consent, incident-response, and vendor-processing policies before handling real customer contracts at scale.
 
 ### Medium

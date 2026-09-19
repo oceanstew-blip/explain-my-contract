@@ -28,6 +28,12 @@ import {
   isRetryableGeminiError,
   withGeminiRetry,
 } from "@/lib/gemini-retry";
+import {
+  errorResponse,
+  getRequestId,
+  jsonResponse,
+  logServerFailure,
+} from "@/lib/request-observability";
 import { getAnalysisEnvironment } from "@/lib/server-env";
 import {
   createReportRecoveryToken,
@@ -65,34 +71,25 @@ function hasPdfSignature(bytes: Uint8Array): boolean {
   );
 }
 
-function errorResponse(message: string, status: number): Response {
-  return Response.json(
-    { error: message },
-    {
-      status,
-      headers: { "Cache-Control": "no-store" },
-    },
-  );
-}
-
-function rateLimitResponse(retryAfterSeconds: number): Response {
-  return Response.json(
-    { error: "Too many analyses were requested. Please try again later." },
-    {
-      status: 429,
-      headers: {
-        "Cache-Control": "no-store",
-        "Retry-After": String(Math.max(1, retryAfterSeconds)),
-      },
-    },
+function rateLimitResponse(
+  requestId: string,
+  retryAfterSeconds: number,
+): Response {
+  return errorResponse(
+    requestId,
+    "Too many analyses were requested. Please try again later.",
+    429,
+    { "Retry-After": String(Math.max(1, retryAfterSeconds)) },
   );
 }
 
 export async function POST(request: Request): Promise<Response> {
+  const requestId = getRequestId(request.headers);
   const contentType = request.headers.get("content-type") ?? "";
 
   if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
     return errorResponse(
+      requestId,
       "Expected a multipart/form-data request containing a PDF file.",
       415,
     );
@@ -104,7 +101,7 @@ export async function POST(request: Request): Promise<Response> {
     Number.isFinite(contentLength) &&
     contentLength > MAX_FILE_SIZE_BYTES + 1_000_000
   ) {
-    return errorResponse("The PDF must be 10 MB or smaller.", 413);
+    return errorResponse(requestId, "The PDF must be 10 MB or smaller.", 413);
   }
 
   try {
@@ -114,6 +111,7 @@ export async function POST(request: Request): Promise<Response> {
 
     if (!intentResult.success) {
       return errorResponse(
+        requestId,
         'Choose either "What the heck am I signing?" or "What the heck did I just sign?".',
         400,
       );
@@ -126,6 +124,7 @@ export async function POST(request: Request): Promise<Response> {
       )
     ) {
       return errorResponse(
+        requestId,
         "Confirm that you understand this is educational analysis, not legal advice.",
         400,
       );
@@ -134,7 +133,11 @@ export async function POST(request: Request): Promise<Response> {
     const turnstileToken = formData.get("turnstile_token");
     const remoteIp = getClientIp(request.headers, process.env.NODE_ENV);
     if (!remoteIp) {
-      return errorResponse("Client verification is unavailable.", 503);
+      return errorResponse(
+        requestId,
+        "Client verification is unavailable.",
+        503,
+      );
     }
     if (
       typeof turnstileToken !== "string" ||
@@ -150,6 +153,7 @@ export async function POST(request: Request): Promise<Response> {
       }))
     ) {
       return errorResponse(
+        requestId,
         "Browser verification failed. Refresh the check and try again.",
         403,
       );
@@ -159,27 +163,32 @@ export async function POST(request: Request): Promise<Response> {
 
     if (!(uploadedValue instanceof File)) {
       return errorResponse(
+        requestId,
         'The multipart field named "file" must contain a PDF.',
         400,
       );
     }
 
     if (uploadedValue.size === 0) {
-      return errorResponse("The uploaded PDF is empty.", 400);
+      return errorResponse(requestId, "The uploaded PDF is empty.", 400);
     }
 
     if (uploadedValue.size > MAX_FILE_SIZE_BYTES) {
-      return errorResponse("The PDF must be 10 MB or smaller.", 413);
+      return errorResponse(requestId, "The PDF must be 10 MB or smaller.", 413);
     }
 
     if (uploadedValue.type && uploadedValue.type !== "application/pdf") {
-      return errorResponse("Only PDF files are supported.", 415);
+      return errorResponse(requestId, "Only PDF files are supported.", 415);
     }
 
     const pdfBytes = new Uint8Array(await uploadedValue.arrayBuffer());
 
     if (!hasPdfSignature(pdfBytes)) {
-      return errorResponse("The uploaded file is not a valid PDF.", 415);
+      return errorResponse(
+        requestId,
+        "The uploaded file is not a valid PDF.",
+        415,
+      );
     }
 
     const supabaseAdmin = createSupabaseAdmin(
@@ -195,7 +204,7 @@ export async function POST(request: Request): Promise<Response> {
       windowSeconds: environment.ANALYSIS_RATE_LIMIT_WINDOW_SECONDS,
     });
     if (!rateLimit.allowed) {
-      return rateLimitResponse(rateLimit.retryAfterSeconds);
+      return rateLimitResponse(requestId, rateLimit.retryAfterSeconds);
     }
 
     const parser = new PDFParse({ data: pdfBytes });
@@ -211,11 +220,16 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     if (!Number.isInteger(pageCount) || pageCount < 1) {
-      return errorResponse("The PDF page count could not be determined.", 422);
+      return errorResponse(
+        requestId,
+        "The PDF page count could not be determined.",
+        422,
+      );
     }
 
     if (!extractedText) {
       return errorResponse(
+        requestId,
         "No readable text was found. This PDF may be scanned or image-only.",
         422,
       );
@@ -223,6 +237,7 @@ export async function POST(request: Request): Promise<Response> {
 
     if (extractedText.length > MAX_EXTRACTED_CHARACTERS) {
       return errorResponse(
+        requestId,
         "This contract contains too much text for the initial scanner.",
         413,
       );
@@ -271,12 +286,19 @@ export async function POST(request: Request): Promise<Response> {
       },
       {
         onRetry: ({ attempt, delayMs, status }) => {
-          console.warn("Retrying transient Gemini request failure", {
-            attempt,
-            delayMs,
-            failedModel: geminiModels[attempt - 1],
-            nextModel: geminiModels[attempt],
-            status,
+          logServerFailure({
+            level: "warn",
+            event: "gemini_retry",
+            requestId,
+            route: "/api/analyze",
+            error: null,
+            metadata: {
+              attempt,
+              delay_ms: delayMs,
+              failed_model: geminiModels[attempt - 1],
+              next_model: geminiModels[attempt],
+              status: status ?? null,
+            },
           });
         },
       },
@@ -307,7 +329,8 @@ export async function POST(request: Request): Promise<Response> {
 
     const checkoutTokenSecret = process.env.CHECKOUT_TOKEN_SECRET?.trim();
 
-    return Response.json(
+    return jsonResponse(
+      requestId,
       {
         contract_id: contractId,
         recovery_token: recoveryToken,
@@ -324,12 +347,16 @@ export async function POST(request: Request): Promise<Response> {
       },
     );
   } catch (error) {
-    console.error("Contract tease analysis failed", {
+    logServerFailure({
+      event: "analysis_failed",
+      requestId,
+      route: "/api/analyze",
       error,
     });
 
     if (error instanceof z.ZodError) {
       return errorResponse(
+        requestId,
         "The analysis service returned an unexpected result.",
         502,
       );
@@ -337,6 +364,7 @@ export async function POST(request: Request): Promise<Response> {
 
     if (error instanceof GeminiOutputError) {
       return errorResponse(
+        requestId,
         "The analysis service returned an incomplete result. Please try again.",
         502,
       );
@@ -344,28 +372,23 @@ export async function POST(request: Request): Promise<Response> {
 
     if (error instanceof AnalysisRateLimitUnavailableError) {
       return errorResponse(
+        requestId,
         "Analysis is temporarily unavailable. Please try again shortly.",
         503,
       );
     }
 
     if (isRetryableGeminiError(error)) {
-      return Response.json(
-        {
-          error:
-            "The analysis service is temporarily busy. Please try again shortly.",
-        },
-        {
-          status: 503,
-          headers: {
-            "Cache-Control": "no-store",
-            "Retry-After": "10",
-          },
-        },
+      return errorResponse(
+        requestId,
+        "The analysis service is temporarily busy. Please try again shortly.",
+        503,
+        { "Retry-After": "10" },
       );
     }
 
     return errorResponse(
+      requestId,
       "We could not analyze this contract. Please try again.",
       500,
     );

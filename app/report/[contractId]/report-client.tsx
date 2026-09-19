@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+import { apiErrorMessage } from "@/lib/api-error";
 import type { AnalysisIntent } from "@/lib/analysis-intent";
 
 type AnalysisItem = {
@@ -33,6 +34,7 @@ function isAnalysisItem(item: AnalysisItem | PreviewItem): item is AnalysisItem 
 
 type ReportResponse = {
   error?: string;
+  request_id?: string;
   intent: AnalysisIntent;
   paid: boolean;
   payment_status: string;
@@ -81,7 +83,11 @@ export default function ReportClient({ contractId }: { contractId: string }) {
           signal: controller.signal,
         });
         const body = (await response.json()) as ReportResponse;
-        if (!response.ok) throw new Error(body.error || "The report could not be opened.");
+        if (!response.ok) {
+          throw new Error(
+            apiErrorMessage(body, "The report could not be opened."),
+          );
+        }
         setState({ status: "ready", data: body, token: validToken });
 
         if (returningFromPayment && !body.paid && attempt < 5) {
@@ -113,8 +119,14 @@ export default function ReportClient({ contractId }: { contractId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contract_id: contractId, checkout_token: data.checkout_token }),
       });
-      const body = (await response.json()) as { error?: string; url?: string };
-      if (!response.ok || !body.url) throw new Error(body.error || "Checkout could not be opened.");
+      const body = (await response.json()) as {
+        error?: string;
+        request_id?: string;
+        url?: string;
+      };
+      if (!response.ok || !body.url) {
+        throw new Error(apiErrorMessage(body, "Checkout could not be opened."));
+      }
       window.location.assign(body.url);
     } catch (error) {
       setState({

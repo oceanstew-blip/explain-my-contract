@@ -3,6 +3,12 @@ import "server-only";
 import { z } from "zod";
 
 import { verifyContractAccessToken } from "@/lib/contract-access-token";
+import {
+  errorResponse,
+  getRequestId,
+  jsonResponse,
+  logServerFailure,
+} from "@/lib/request-observability";
 import { getCheckoutEnvironment } from "@/lib/server-env";
 import { createStripe } from "@/lib/stripe";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
@@ -16,18 +22,14 @@ const requestSchema = z
   })
   .strict();
 
-function errorResponse(message: string, status: number): Response {
-  return Response.json(
-    { error: message },
-    { status, headers: { "Cache-Control": "no-store" } },
-  );
-}
-
 export async function POST(request: Request): Promise<Response> {
+  const requestId = getRequestId(request.headers);
   try {
     const environment = getCheckoutEnvironment();
     const parsed = requestSchema.safeParse(await request.json());
-    if (!parsed.success) return errorResponse("Invalid checkout request.", 400);
+    if (!parsed.success) {
+      return errorResponse(requestId, "Invalid checkout request.", 400);
+    }
 
     const { contract_id: contractId, checkout_token: checkoutToken } =
       parsed.data;
@@ -38,7 +40,11 @@ export async function POST(request: Request): Promise<Response> {
         environment.CHECKOUT_TOKEN_SECRET,
       )
     ) {
-      return errorResponse("This checkout link is invalid or expired.", 403);
+      return errorResponse(
+        requestId,
+        "This checkout link is invalid or expired.",
+        403,
+      );
     }
 
     const supabase = createSupabaseAdmin(
@@ -53,9 +59,15 @@ export async function POST(request: Request): Promise<Response> {
       .eq("id", contractId)
       .single();
 
-    if (error || !contract) return errorResponse("Contract not found.", 404);
+    if (error || !contract) {
+      return errorResponse(requestId, "Contract not found.", 404);
+    }
     if (contract.payment_status === "paid") {
-      return errorResponse("This report has already been paid for.", 409);
+      return errorResponse(
+        requestId,
+        "This report has already been paid for.",
+        409,
+      );
     }
 
     const stripe = createStripe(environment.STRIPE_SECRET_KEY);
@@ -64,7 +76,8 @@ export async function POST(request: Request): Promise<Response> {
         contract.stripe_session_id,
       );
       if (existing.status === "open" && existing.url) {
-        return Response.json(
+        return jsonResponse(
+          requestId,
           { url: existing.url },
           { headers: { "Cache-Control": "no-store" } },
         );
@@ -105,15 +118,29 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    return Response.json(
+    return jsonResponse(
+      requestId,
       { url: checkout.url },
       { status: 201, headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return errorResponse("Payments are not configured yet.", 503);
+      return errorResponse(
+        requestId,
+        "Payments are not configured yet.",
+        503,
+      );
     }
-    console.error("Stripe Checkout session creation failed", { error });
-    return errorResponse("Checkout is temporarily unavailable.", 503);
+    logServerFailure({
+      event: "checkout_creation_failed",
+      requestId,
+      route: "/api/checkout",
+      error,
+    });
+    return errorResponse(
+      requestId,
+      "Checkout is temporarily unavailable.",
+      503,
+    );
   }
 }

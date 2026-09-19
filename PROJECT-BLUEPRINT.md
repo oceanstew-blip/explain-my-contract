@@ -58,6 +58,7 @@ Completed:
 - Cloudflare Turnstile browser verification and fail-closed server-side Siteverify checks on `/api/analyze`
 - durable, Supabase-backed analysis rate limiting keyed by an HMAC of the client IP, with atomic counters and fail-closed behavior
 - production configuration guards that reject Turnstile test keys, test mode, and localhost hostname allowlists
+- request correlation IDs on every API response, support IDs in browser-visible errors, and structured server failures that omit error messages, stacks, contract text, and secrets
 - environment template, health route, security headers, and GitHub Actions CI
 - passing tests, ESLint, TypeScript, production build, and production dependency audit
 
@@ -70,7 +71,7 @@ Not yet completed:
 - account/recovery flow
 - background job processing
 - privacy retention and deletion workflow
-- monitoring and alerting
+- external error monitoring, metrics, and alerting
 - deployment
 - Stripe test-mode end-to-end tests
 

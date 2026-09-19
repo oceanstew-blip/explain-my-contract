@@ -3,6 +3,12 @@ import "server-only";
 import { z } from "zod";
 
 import { createContractAccessToken } from "@/lib/contract-access-token";
+import {
+  errorResponse,
+  getRequestId,
+  jsonResponse,
+  logServerFailure,
+} from "@/lib/request-observability";
 import { verifyReportRecoveryToken } from "@/lib/report-access";
 import { createReportDelivery } from "@/lib/report-delivery";
 import { getReportEnvironment } from "@/lib/server-env";
@@ -12,17 +18,11 @@ export const runtime = "nodejs";
 
 const contractIdSchema = z.uuid();
 
-function errorResponse(message: string, status: number): Response {
-  return Response.json(
-    { error: message },
-    { status, headers: { "Cache-Control": "no-store" } },
-  );
-}
-
 export async function GET(
   request: Request,
   context: { params: Promise<{ contractId: string }> },
 ): Promise<Response> {
+  const requestId = getRequestId(request.headers);
   const { contractId: rawContractId } = await context.params;
   const parsedContractId = contractIdSchema.safeParse(rawContractId);
   const authorization = request.headers.get("authorization") ?? "";
@@ -31,7 +31,7 @@ export async function GET(
     : "";
 
   if (!parsedContractId.success || !recoveryToken) {
-    return errorResponse("This report link is invalid.", 403);
+    return errorResponse(requestId, "This report link is invalid.", 403);
   }
 
   try {
@@ -53,7 +53,7 @@ export async function GET(
       typeof contract.recovery_token_hash !== "string" ||
       !verifyReportRecoveryToken(recoveryToken, contract.recovery_token_hash)
     ) {
-      return errorResponse("This report link is invalid.", 403);
+      return errorResponse(requestId, "This report link is invalid.", 403);
     }
 
     const { data: analysis, error: analysisError } = await supabase
@@ -74,7 +74,8 @@ export async function GET(
         ? createContractAccessToken(contractId, checkoutTokenSecret)
         : undefined;
 
-    return Response.json(
+    return jsonResponse(
+      requestId,
       createReportDelivery({
         contractId,
         intent: analysis.intent,
@@ -87,7 +88,16 @@ export async function GET(
       { headers: { "Cache-Control": "no-store, private" } },
     );
   } catch (error) {
-    console.error("Report recovery failed", { error });
-    return errorResponse("The report could not be retrieved.", 500);
+    logServerFailure({
+      event: "report_recovery_failed",
+      requestId,
+      route: "/api/reports/[contractId]",
+      error,
+    });
+    return errorResponse(
+      requestId,
+      "The report could not be retrieved.",
+      500,
+    );
   }
 }
