@@ -53,6 +53,8 @@ Completed:
 - a 256-bit anonymous recovery key stored only as a SHA-256 hash, with a private `/report/[contractId]` recovery experience
 - paid report retrieval that checks both the recovery key and recorded payment state before returning the full analysis
 - payment return handling that preserves the recovery key in session storage and briefly polls for delayed webhooks
+- upload copy that clearly excludes scanned/image-only PDFs
+- browser and server enforcement of an explicit educational-analysis acknowledgment
 - environment template, health route, security headers, and GitHub Actions CI
 - passing tests, ESLint, TypeScript, production build, and production dependency audit
 
@@ -78,6 +80,16 @@ Detailed instructions: [`IMPLEMENTATION-GUIDE.md`](./IMPLEMENTATION-GUIDE.md)
 3. Configure Stripe test mode and exercise successful, duplicate, delayed, failed, and tampered webhook cases.
 4. Add privacy, retention, deletion, monitoring, refund, and support operations.
 5. Deploy a non-production preview and complete security and end-to-end verification before launch.
+
+## Pricing proposal under review
+
+The supplied business note proposes one-time pricing by page count: $5 for 1–5 pages, $12 for 6–15 pages, $25 for 16–50 pages, and $50 for 51+ pages. This is not yet approved production pricing. Current Checkout intentionally uses one server-controlled Stripe Price ID; it must not accept a browser-supplied page count or amount.
+
+Before implementing tiers, verify current Stripe and Gemini costs, define what happens when page count and extracted-text volume diverge, and decide whether documents above 50 pages are supported. Create separate server-controlled Stripe Price IDs for approved tiers rather than calculating an arbitrary client-controlled charge.
+
+## Retention decision still required
+
+The current request path parses the uploaded PDF in memory and does not intentionally store the PDF bytes. Supabase stores contract metadata, the free preview, and the full analysis. A 30-day deletion rule is a useful proposal, but it cannot be implemented responsibly until the product defines separate retention periods for unpaid previews, paid reports, payment/refund records, webhook idempotency records, and user-requested deletion. The recovery experience must state the selected expiry before automatic deletion is enabled.
 
 ## Current external-action boundary
 

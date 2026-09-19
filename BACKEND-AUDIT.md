@@ -14,6 +14,7 @@ Audit date: 2026-09-19
 - Added an atomic, duplicate-safe database function for recording paid Checkout events.
 - Added explicit payment states and unique Stripe identifiers.
 - Added secure response headers, a health endpoint, an environment template, Node 22 requirement, and GitHub Actions verification.
+- Added a digital-PDF limitation notice and required educational-analysis acknowledgment enforced in both the browser and `/api/analyze`.
 - Upgraded Vitest from a vulnerable release to 4.1.11; `npm audit` then reported zero known vulnerabilities.
 
 ## Launch blockers

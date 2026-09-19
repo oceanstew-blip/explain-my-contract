@@ -10,6 +10,7 @@ import {
   getAnalysisConfig,
   validateAnalysisResult,
 } from "@/lib/analysis-config";
+import { hasAcknowledgedAnalysisDisclaimer } from "@/lib/analysis-disclaimer";
 import { analysisIntentSchema } from "@/lib/analysis-intent";
 import { createContractAccessToken } from "@/lib/contract-access-token";
 import {
@@ -96,6 +97,17 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const intent = intentResult.data;
+    if (
+      !hasAcknowledgedAnalysisDisclaimer(
+        formData.get("disclaimer_acknowledged"),
+      )
+    ) {
+      return errorResponse(
+        "Confirm that you understand this is educational analysis, not legal advice.",
+        400,
+      );
+    }
+
     const uploadedValue = formData.get("file");
 
     if (!(uploadedValue instanceof File)) {

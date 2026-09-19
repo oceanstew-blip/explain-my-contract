@@ -3,6 +3,7 @@
 import { ChangeEvent, DragEvent, useRef, useState } from "react";
 import Image from "next/image";
 
+import { ANALYSIS_DISCLAIMER_TEXT } from "@/lib/analysis-disclaimer";
 import type { AnalysisIntent } from "@/lib/analysis-intent";
 
 type SubmissionState =
@@ -159,6 +160,7 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [disclaimerAcknowledged, setDisclaimerAcknowledged] = useState(false);
   const [submission, setSubmission] = useState<SubmissionState>({
     status: "idle",
   });
@@ -174,6 +176,7 @@ export default function Home() {
     }
 
     setFile(selectedFile);
+    setDisclaimerAcknowledged(false);
     setSubmission({ status: "idle" });
   }
 
@@ -189,6 +192,7 @@ export default function Home() {
 
   function resetFile() {
     setFile(null);
+    setDisclaimerAcknowledged(false);
     setSubmission({ status: "idle" });
     if (inputRef.current) inputRef.current.value = "";
   }
@@ -200,6 +204,10 @@ export default function Home() {
     const formData = new FormData();
     formData.set("file", file);
     formData.set("intent", intent);
+    formData.set(
+      "disclaimer_acknowledged",
+      disclaimerAcknowledged ? "true" : "false",
+    );
 
     try {
       const response = await fetch("/api/analyze", {
@@ -353,6 +361,10 @@ export default function Home() {
                 />
               </label>
               <p className="mt-4 text-xs text-brand-muted">PDF only · 10 MB maximum</p>
+              <p className="mt-2 max-w-md text-xs leading-5 text-brand-muted">
+                Upload a digital, text-based PDF. Scanned documents and photos
+                are not currently supported.
+              </p>
             </div>
           ) : isSubmitting ? (
             <div aria-live="polite" className="flex flex-col items-center py-7">
@@ -383,9 +395,22 @@ export default function Home() {
                 Your answer changes what the analysis looks for.
               </p>
 
+              <label className="mt-6 flex w-full items-start gap-3 rounded-2xl border border-brand-border bg-white px-4 py-4 text-left text-sm leading-6 text-brand-ink">
+                <input
+                  checked={disclaimerAcknowledged}
+                  className="mt-1 size-4 shrink-0 accent-brand-action"
+                  type="checkbox"
+                  onChange={(event) =>
+                    setDisclaimerAcknowledged(event.currentTarget.checked)
+                  }
+                />
+                <span>{ANALYSIS_DISCLAIMER_TEXT}</span>
+              </label>
+
               <div className="mt-7 grid w-full gap-4 sm:grid-cols-2">
                 <button
-                  className="rounded-2xl border-2 border-brand-action bg-white px-5 py-5 text-left font-bold text-brand-action transition hover:bg-brand-canvas-deep focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action"
+                  className="rounded-2xl border-2 border-brand-action bg-white px-5 py-5 text-left font-bold text-brand-action transition hover:bg-brand-canvas-deep focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action disabled:cursor-not-allowed disabled:border-brand-border disabled:text-brand-muted disabled:opacity-60"
+                  disabled={!disclaimerAcknowledged}
                   type="button"
                   onClick={() => processDocument("considering_signing")}
                 >
@@ -395,7 +420,8 @@ export default function Home() {
                   </span>
                 </button>
                 <button
-                  className="rounded-2xl border-2 border-brand-action bg-brand-action px-5 py-5 text-left font-bold text-white shadow-lg shadow-brand-action/15 transition hover:border-brand-indigo hover:bg-brand-indigo focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action"
+                  className="rounded-2xl border-2 border-brand-action bg-brand-action px-5 py-5 text-left font-bold text-white shadow-lg shadow-brand-action/15 transition hover:border-brand-indigo hover:bg-brand-indigo focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action disabled:cursor-not-allowed disabled:border-brand-border disabled:bg-brand-muted disabled:opacity-60"
+                  disabled={!disclaimerAcknowledged}
                   type="button"
                   onClick={() => processDocument("already_signed")}
                 >
