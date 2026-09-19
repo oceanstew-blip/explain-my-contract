@@ -12,7 +12,7 @@ People and small-business owners who have a PDF contract in front of them and ne
 
 ## Product Purpose
 
-Explain My Contract provides a plain-language, educational first pass on a contract. It helps a person identify terms that deserve closer attention and understand the practical consequence of those terms without presenting the analysis as legal advice.
+Explain My Contract Now provides a plain-language, educational first pass on a contract. It helps a person identify terms that deserve closer attention and understand the practical consequence of those terms without presenting the analysis as legal advice.
 
 ## Positioning
 
@@ -33,7 +33,7 @@ The user uploads a digital, text-based PDF up to 10 MB, acknowledges the educati
 
 ## Brand Commitments
 
-- Product name: Explain My Contract.
+- Product name: Explain My Contract Now.
 - It is a Tami Stewart Consults tool.
 - Use the complete official Tami Stewart Consults mark, including CONSULTS.
 - Voice should be direct, candid, specific, useful, and calm. It may acknowledge the reader's real “what the heck?” reaction without manufacturing fear.

@@ -518,7 +518,7 @@ export default function Home() {
           <a href="#how-it-works">How It Works</a>
           <a href="#faq">FAQ</a>
           <a className="meet-tami" href="https://tamistewartconsults.com">Meet Tami</a>
-          <a className="header-cta" href="#upload">Explain My Contract</a>
+          <a className="header-cta" href="#upload">Explain My Contract Now</a>
         </nav>
       </header>
 
@@ -551,7 +551,7 @@ export default function Home() {
             </div>
             <div className="hero-action">
               <a className="primary-cta" href="#upload" ref={heroCtaRef}>
-                Explain My Contract <span aria-hidden="true">→</span>
+                Explain My Contract Now <span aria-hidden="true">→</span>
               </a>
             </div>
             <p className="trust-line">Private report link. Automatically expires. Educational, not legal advice.</p>
@@ -633,7 +633,7 @@ export default function Home() {
             <p>Contracts can bury important terms inside pages of legal language.</p>
             <p>Your report helps you quickly see what affects your money, responsibilities, timing, flexibility, and options.</p>
             <p className="attention-close">So you can sign with a clearer picture of what you’re agreeing to, not wondering what you missed.</p>
-            <a className="text-cta" href="#upload">Explain My Contract <span aria-hidden="true">→</span></a>
+            <a className="text-cta" href="#upload">Explain My Contract Now <span aria-hidden="true">→</span></a>
           </div>
           <div className="attention-list">
             <article><span>Money</span><p>Payments, fees, and what the other party provides.</p></article>
@@ -676,7 +676,7 @@ export default function Home() {
 
         <section className="upload-zone section-shell" id="upload">
           <div className="upload-heading" data-reveal>
-            <h2>Explain My Contract</h2>
+            <h2>Explain My Contract Now</h2>
             <p>{REVIEW_ONLY ? "This public preview is for reviewing the experience. Contract uploads are intentionally disabled." : `${isAlreadySigned ? "Upload the contract you already signed." : "Upload the contract you are considering signing."} PDF only, 10 MB maximum.`}</p>
           </div>
 
@@ -735,7 +735,7 @@ export default function Home() {
                 Reading your contract
               </h2>
               <p className="mt-2 text-sm text-brand-muted">
-                Explain My Contract is scanning the document now.
+                Explain My Contract Now is scanning the document.
               </p>
             </div>
           ) : submission.status === "success" ? (
@@ -847,7 +847,7 @@ export default function Home() {
         </section>
 
         <section className="final-section" data-reveal>
-          <div className="section-shell"><h2>Before you sign, or after you already did</h2><p>You don’t need to become a lawyer. You need to know what you’re agreeing to, what may affect you, and what deserves another look.</p><a className="final-cta" href="#upload">Explain My Contract <span aria-hidden="true">→</span></a><small>Plain English. Private report link. Automatically expires. Educational, not legal advice.</small></div>
+          <div className="section-shell"><h2>Before you sign, or after you already did</h2><p>You don’t need to become a lawyer. You need to know what you’re agreeing to, what may affect you, and what deserves another look.</p><a className="final-cta" href="#upload">Explain My Contract Now <span aria-hidden="true">→</span></a><small>Plain English. Private report link. Automatically expires. Educational, not legal advice.</small></div>
         </section>
 
         <section className="faq-section section-shell" data-reveal id="faq">
@@ -870,12 +870,12 @@ export default function Home() {
             <p>Understand the contract. Know what it means for you.</p>
           </div>
           <nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><a href="#faq">FAQ</a><a href="https://tamistewartconsults.com">Meet Tami</a></nav>
-          <div className="footer-action"><a className="header-cta" href="#upload">Explain My Contract</a></div>
+          <div className="footer-action"><a className="header-cta" href="#upload">Explain My Contract Now</a></div>
         </div>
         <div className="section-shell footer-bottom"><p>Educational—not legal advice.</p></div>
       </footer>
 
-      {showStickyCta && !file ? <a className="mobile-sticky-cta" href="#upload">Explain My Contract</a> : null}
+      {showStickyCta && !file ? <a className="mobile-sticky-cta" href="#upload">Explain My Contract Now</a> : null}
     </div>
   );
 }

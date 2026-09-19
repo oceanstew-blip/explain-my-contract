@@ -1,4 +1,4 @@
-# Explain My Contract Project Blueprint
+# Explain My Contract Now Project Blueprint
 
 ## Product purpose
 

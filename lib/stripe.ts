@@ -5,7 +5,7 @@ import Stripe from "stripe";
 export function createStripe(secretKey: string): Stripe {
   return new Stripe(secretKey, {
     appInfo: {
-      name: "Explain My Contract",
+      name: "Explain My Contract Now",
       version: "0.1.0",
     },
     maxNetworkRetries: 2,

@@ -14,7 +14,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Explain My Contract",
+  title: "Explain My Contract Now",
   description: "Plain-language informational contract analysis.",
 };
 

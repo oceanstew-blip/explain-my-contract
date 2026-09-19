@@ -1,4 +1,4 @@
-# Explain My Contract
+# Explain My Contract Now
 
 An educational Next.js application that translates a PDF contract into plain language before or after signing. It is not legal advice.
 

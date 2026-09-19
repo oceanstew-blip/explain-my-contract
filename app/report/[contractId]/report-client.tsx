@@ -184,7 +184,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
   return (
     <main className="min-h-screen bg-brand-canvas px-5 py-12 text-brand-ink sm:px-8">
       <div className="mx-auto max-w-3xl">
-        <Link className="text-sm font-bold text-brand-action" href="/">← Explain My Contract</Link>
+        <Link className="text-sm font-bold text-brand-action" href="/">← Explain My Contract Now</Link>
 
         {state.status === "loading" ? (
           <p className="mt-12 rounded-2xl bg-white px-6 py-8">Opening your private report…</p>
