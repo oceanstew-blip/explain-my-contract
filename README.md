@@ -44,7 +44,15 @@ procedures before launch.
 
 ```bash
 npm run check
+supabase db start
+supabase test db --local
+supabase db advisors --local
 ```
+
+The database commands replay every migration from the checked-in baseline,
+exercise retention and permission behavior with pgTAP, and run the Supabase
+security/performance advisors. GitHub Actions runs the same database checks on
+every pull request and push to `main`.
 
 This runs tests, ESLint, TypeScript, and the production webpack build. GitHub Actions runs the same command on pushes to `main` and on pull requests.
 

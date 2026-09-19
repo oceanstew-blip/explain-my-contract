@@ -20,3 +20,16 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+
+  database:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: supabase/setup-cli@v2
+        with:
+          version: 2.109.0
+          github-token: ${{ github.token }}
+      - run: supabase db start
+      - run: supabase test db --local
+      - run: supabase db advisors --local
