@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Montserrat } from "next/font/google";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   description: "Plain-language informational contract analysis.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
