@@ -1224,3 +1224,4 @@ body {
   .transformation-stage.is-playing .contract-document,.transformation-stage.is-playing .scan-line,.transformation-stage.is-playing .phrase-transform { display:none; animation:none; }
   .transformation-stage.is-playing .snapshot-report,.transformation-stage.is-playing .snapshot-grid section,.transformation-stage.is-playing .snapshot-ready { opacity:1; transform:none; filter:none; animation:none; }
 }
+

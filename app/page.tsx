@@ -299,7 +299,8 @@ export default function Home() {
   const [manualPaused, setManualPaused] = useState(false);
   const [interactionPaused, setInteractionPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const demoPaused = manualPaused || interactionPaused;
+  const [pageMotionPaused, setPageMotionPaused] = useState(false);
+  const demoPaused = manualPaused || interactionPaused || pageMotionPaused;
   const [submission, setSubmission] = useState<SubmissionState>({
     status: "idle",
   });
@@ -504,7 +505,7 @@ export default function Home() {
   const selectedContract = CONTRACT_EXAMPLES.find((contract) => contract.id === selectedContractId) ?? CONTRACT_EXAMPLES[0];
 
   return (
-    <div className="site-shell min-h-[100dvh] bg-brand-white text-brand-ink">
+    <div className={`site-shell experience min-h-[100dvh] bg-brand-white text-brand-ink ${pageMotionPaused ? "motion-paused" : ""}`}>
       {!REVIEW_ONLY ? (
         <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
@@ -525,21 +526,22 @@ export default function Home() {
           <Image
             alt="Tami Stewart Consults"
             className="brand-mark"
-            height={62}
+            height={124}
             priority
             src="/brand/tami-stewart-consults-logo.svg"
-            width={210}
+            width={288}
           />
         </a>
         <nav className="header-nav" aria-label="Primary navigation">
           <a href="#how-it-works">How It Works</a>
-          <a href="#faq">FAQ</a>
+          <a href="#faq">Common Questions</a>
           <a className="meet-tami" href="https://tamistewartconsults.com">Meet Tami</a>
           <a className="header-cta" href="#upload">Explain My Contract Now</a>
         </nav>
       </header>
 
       <main id="top">
+        <button className="motion-toggle" type="button" aria-pressed={pageMotionPaused} onClick={() => setPageMotionPaused(!pageMotionPaused)}>{pageMotionPaused ? "Play page motion" : "Pause page motion"}</button>
         <section className="hero mx-auto grid w-full max-w-[1240px] px-5 lg:grid-cols-[52fr_48fr] lg:items-center">
           <div className="hero-copy">
             <div className="intent-selector" aria-label="Choose your situation" role="group">
@@ -552,7 +554,7 @@ export default function Home() {
             </div>
             <div className="hero-message" key={selectedIntent}>
               <h1 className="font-fraunces font-semibold text-brand-indigo">
-                {isAlreadySigned ? "What the hell did I sign?" : "What the hell am I signing?"}
+                <span className="headline-line">What the hell</span>{" "}<span className="headline-line headline-accent">{isAlreadySigned ? "did I sign?" : "am I signing?"}</span>
               </h1>
               {!isAlreadySigned ? (
                 <>
@@ -644,9 +646,13 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="terms-ribbon" aria-label="What your report helps you understand">
+          <div className="terms-track" aria-hidden="true">{[0, 1].map(copy => <div className="terms-run" key={copy}><span>Your money</span><i>→</i><span>Your time</span><i>→</i><span>Your obligations</span><i>→</i><span>Your next questions</span><i>→</i></div>)}</div>
+          <p className="sr-only">Your money. Your time. Your obligations. Your next questions.</p>
+        </section>
         <section className="attention-section section-shell" data-reveal>
           <div className="attention-copy">
-            <h2>Know what deserves your attention</h2>
+            <span className="section-eyebrow">01 / Read between the lines</span><h2>Know what deserves <em>your attention.</em></h2>
             <p>Contracts can bury important terms inside pages of legal language.</p>
             <p>Your report helps you quickly see what affects your money, responsibilities, timing, flexibility, and options.</p>
             <p className="attention-close">So you can sign with a clearer picture of what you’re agreeing to, not wondering what you missed.</p>
@@ -842,7 +848,7 @@ export default function Home() {
         </section>
 
         <section className="how-section section-shell" data-reveal id="how-it-works">
-          <div className="section-heading"><h2>How it works</h2></div>
+          <div className="section-heading"><span className="section-eyebrow">03 / From PDF to perspective</span><h2>Less head-scratching.<br /><em>More understanding.</em></h2></div>
           <ol>
             <li><span>01</span><div><h3>Upload your contract</h3><p>Choose the contract you want to understand.</p></div></li>
             <li><span>02</span><div><h3>Get a plain-English report</h3><p>See the provisions that may affect your money, obligations, deadlines, flexibility, and options.</p></div></li>
@@ -851,7 +857,7 @@ export default function Home() {
         </section>
 
         <section className="truth-section section-shell" data-reveal>
-          <div><h2>Built for understanding, not legal advice</h2></div>
+          <div><span className="section-eyebrow">A clear boundary</span><h2>Built for understanding, <em>not legal advice.</em></h2></div>
           <div><p>This tool is designed to help you understand what a contract says.</p><p>It does not tell you whether you should sign, determine your legal rights, predict how a provision would be enforced, or replace advice from a qualified attorney.</p><p>For important decisions, verify key terms in the original contract and consult an attorney when appropriate.</p></div>
         </section>
 
@@ -884,10 +890,10 @@ export default function Home() {
       <footer className="site-footer" id="meet-tami">
         <div className="section-shell footer-grid">
           <div className="footer-brand">
-            <Image alt="Tami Stewart Consults" height={64} loading="eager" src="/brand/tami-stewart-consults-logo.svg" width={220} />
+            <Image alt="Tami Stewart Consults" height={124} loading="eager" src="/brand/tami-stewart-consults-logo.svg" width={288} />
             <p>Understand the contract. Know what it means for you.</p>
           </div>
-          <nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><a href="#faq">FAQ</a><a href="https://tamistewartconsults.com">Meet Tami</a></nav>
+          <nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><a href="#faq">Common Questions</a><a href="https://tamistewartconsults.com">Meet Tami</a></nav>
           <div className="footer-action"><a className="header-cta" href="#upload">Explain My Contract Now</a></div>
         </div>
         <div className="section-shell footer-bottom"><p>Educational—not legal advice.</p></div>
@@ -897,3 +903,4 @@ export default function Home() {
     </div>
   );
 }
+
