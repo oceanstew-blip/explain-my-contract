@@ -544,18 +544,18 @@ export default function Home() {
         <button className="motion-toggle" type="button" aria-pressed={pageMotionPaused} onClick={() => setPageMotionPaused(!pageMotionPaused)}>{pageMotionPaused ? "Play page motion" : "Pause page motion"}</button>
         <section className="hero mx-auto grid w-full max-w-[1240px] px-5 lg:grid-cols-[52fr_48fr] lg:items-center">
           <div className="hero-copy">
-            <div className="intent-selector" aria-label="Choose your situation" role="group">
-              <button aria-pressed={!isAlreadySigned} className={!isAlreadySigned ? "is-selected" : ""} onClick={() => setSelectedIntent("considering_signing")} type="button">
-                Before I sign
-              </button>
-              <button aria-pressed={isAlreadySigned} className={isAlreadySigned ? "is-selected" : ""} onClick={() => setSelectedIntent("already_signed")} type="button">
-                I already signed
-              </button>
-            </div>
             <div className="hero-message" key={selectedIntent}>
               <h1 className="font-fraunces font-semibold text-brand-indigo">
-                <span className="headline-line">What the hell</span>{" "}<span className="headline-line headline-accent">{isAlreadySigned ? "did I sign?" : "am I signing?"}</span>
+                <span className="headline-line">Explain My</span>{" "}<span className="headline-line headline-accent">Contract Now</span>
               </h1>
+              <div className="intent-selector" aria-label="Choose your signing status" role="group">
+                <button aria-pressed={!isAlreadySigned} className={!isAlreadySigned ? "is-selected" : ""} onClick={() => setSelectedIntent("considering_signing")} type="button">
+                  I haven’t signed yet
+                </button>
+                <button aria-pressed={isAlreadySigned} className={isAlreadySigned ? "is-selected" : ""} onClick={() => setSelectedIntent("already_signed")} type="button">
+                  I already signed
+                </button>
+              </div>
               {!isAlreadySigned ? (
                 <>
                   <p className="hero-subhead">Understand the contract. Know what it means for you.</p>
@@ -903,4 +903,3 @@ export default function Home() {
     </div>
   );
 }
-
