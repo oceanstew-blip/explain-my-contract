@@ -6,6 +6,7 @@ An educational Next.js application that translates a PDF contract into plain lan
 
 - PDF validation and text extraction run on the server.
 - Gemini returns schema-validated JSON with bounded retry and model fallback.
+- When configured, retryable Gemini outages fail over to OpenAI GPT-5.6 Terra using the same strict report schema. OpenAI requests set `store: false`.
 - Supabase stores contract metadata and analysis atomically after the included migration is applied.
 - Turnstile and a durable Supabase-backed rate limiter protect the Gemini-backed analysis endpoint.
 - API responses include correlation IDs; user-visible failures show a support ID while server logs omit error messages, stacks, uploaded contract text, and secrets.
@@ -61,13 +62,14 @@ This runs tests, ESLint, TypeScript, and the production webpack build. GitHub Ac
 The payment code is intentionally unavailable until every item below is complete:
 
 1. Verify the implemented full paid report deliverable in a protected preview.
-2. Create a Stripe Product and one-time Price in test mode.
-3. Set `STRIPE_PRICE_ID`, `STRIPE_SECRET_KEY`, and a 32+ character `CHECKOUT_TOKEN_SECRET`.
-4. Register `/api/stripe/webhook`, subscribe it to the required events below, and set `STRIPE_WEBHOOK_SECRET`.
-5. Apply the payment-state migration and verify its functions and RLS/grants.
-6. Test successful, duplicate, delayed, failed, and tampered webhook cases in Stripe test mode.
-7. Confirm the implemented full-refund, partial-refund, dispute, and customer-support behavior against written policy.
-8. Only then set `STRIPE_CHECKOUT_ENABLED=true`.
+2. Create a Stripe Product with one-time Prices for short (1–5 page) and standard (6+ page) contracts in test mode.
+3. Create a test-mode Coupon and customer-facing Promotion Code for beta testers. Checkout Sessions accept active promotion codes at the Stripe-hosted checkout page.
+4. Set `STRIPE_PRICE_ID_SHORT`, `STRIPE_PRICE_ID_STANDARD`, `STRIPE_SECRET_KEY`, and a 32+ character `CHECKOUT_TOKEN_SECRET`.
+5. Register `/api/stripe/webhook`, subscribe it to the required events below, and set `STRIPE_WEBHOOK_SECRET`.
+6. Apply the payment-state migration and verify its functions and RLS/grants.
+7. Test full-price and 100%-discount checkouts plus successful, duplicate, delayed, failed, and tampered webhook cases in Stripe test mode.
+8. Confirm the implemented full-refund, partial-refund, dispute, and customer-support behavior against written policy.
+9. Only then set `STRIPE_CHECKOUT_ENABLED=true`.
 
 The browser never decides whether a payment succeeded. Only a signature-verified Stripe webhook can mark a contract paid.
 

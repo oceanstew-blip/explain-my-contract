@@ -17,12 +17,22 @@ type AnalysisItem = {
 
 type AnalysisReport = {
   agreement_snapshot: {
+    reviewed_for?: string;
     agreement_type: string;
     provider: string;
+    counterparty_label?: string;
     term: string;
+    what_you_get?: string[];
+    what_you_pay?: string[];
+    what_you_commit_to?: string[];
   };
   total_flags: number;
   categories_found: string[];
+  protections?: Array<{
+    headline: string;
+    explanation: string;
+    location: string;
+  }>;
   detailed_analysis: AnalysisItem[];
   informational_notice?: string;
 };
@@ -49,6 +59,28 @@ function attentionPresentation(level: AnalysisItem["attention_level"]) {
   return { label: "Important to understand", classes: "border-amber-200 bg-amber-50 text-amber-900" };
 }
 
+function FindingCard({ item }: { item: AnalysisItem | PreviewItem }) {
+  const attention = attentionPresentation(item.attention_level);
+  return (
+    <article className="rounded-2xl border border-brand-border p-5">
+      <span className={`inline-flex rounded-full border px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.1em] ${attention.classes}`}>
+        {attention.label}
+      </span>
+      <h2 className="mt-2 font-fraunces text-xl font-semibold text-brand-indigo">{item.headline}</h2>
+      <p className="mt-1 text-xs font-bold uppercase tracking-[0.1em] text-brand-muted">{item.location}</p>
+      {isAnalysisItem(item) ? (
+        <div className="mt-4 space-y-3 text-sm leading-6">
+          <p><strong>In plain English:</strong> {item.legal_gibberish}</p>
+          <p><strong>What it means:</strong> {item.danger}</p>
+          <p><strong>Your contract-based next step:</strong> {item.fix}</p>
+        </div>
+      ) : (
+        <p className="mt-3 text-sm font-semibold text-brand-action">Explanation included in the full report.</p>
+      )}
+    </article>
+  );
+}
+
 type ReportResponse = {
   error?: string;
   request_id?: string;
@@ -66,6 +98,7 @@ type ReportResponse = {
     flag_previews: PreviewItem[];
   };
   report?: AnalysisReport;
+  local_fixture?: boolean;
 };
 
 export default function ReportClient({ contractId }: { contractId: string }) {
@@ -85,6 +118,8 @@ export default function ReportClient({ contractId }: { contractId: string }) {
   const highAttentionCount = displayedItems.filter(
     (item) => item.attention_level === "high_attention",
   ).length;
+  const highAttentionItems = displayedItems.filter((item) => item.attention_level === "high_attention");
+  const remainingItems = displayedItems.filter((item) => item.attention_level !== "high_attention");
 
   useEffect(() => {
     const storageKey = `explain-my-contract:${contractId}`;
@@ -242,7 +277,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
                 {state.data.preview.agreement_snapshot.agreement_type}
               </h1>
               <p className="mt-3 text-sm text-brand-canvas">
-                {state.data.preview.total_flags} {state.data.preview.total_flags === 1 ? "flag" : "flags"} found
+                {state.data.preview.total_flags} {state.data.preview.total_flags === 1 ? "term" : "terms"} to review · {highAttentionCount} high attention
               </p>
               <p className="mt-2 text-xs text-brand-canvas">
                 Available until {new Intl.DateTimeFormat(undefined, {
@@ -253,6 +288,35 @@ export default function ReportClient({ contractId }: { contractId: string }) {
             </header>
 
             <div className="space-y-4 px-5 py-6 sm:px-7">
+              {state.data.report ? (
+                <section className="rounded-2xl border border-brand-border bg-brand-canvas px-5 py-5">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-brand-action">The deal at a glance</p>
+                  {state.data.report.agreement_snapshot.reviewed_for ? (
+                    <p className="mt-3 text-sm">
+                      <strong>{state.data.intent === "considering_signing" ? "Prospective party reviewed:" : "Party reviewed:"}</strong>{" "}
+                      {state.data.report.agreement_snapshot.reviewed_for}
+                    </p>
+                  ) : null}
+                  <p className="mt-2 text-sm">
+                    <strong>{state.data.report.agreement_snapshot.counterparty_label ?? "Named service provider"}:</strong>{" "}
+                    {state.data.report.agreement_snapshot.provider}
+                  </p>
+                  <p className="mt-2 text-sm"><strong>Term:</strong> {state.data.report.agreement_snapshot.term}</p>
+                  {[
+                    ["What you get", state.data.report.agreement_snapshot.what_you_get],
+                    ["What you pay", state.data.report.agreement_snapshot.what_you_pay],
+                    ["What you commit to", state.data.report.agreement_snapshot.what_you_commit_to],
+                  ].map(([label, values]) => Array.isArray(values) && values.length ? (
+                    <div className="mt-4" key={label as string}>
+                      <h2 className="font-fraunces text-lg font-semibold text-brand-indigo">{label as string}</h2>
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6">
+                        {values.map((value) => <li key={value}>{value}</li>)}
+                      </ul>
+                    </div>
+                  ) : null)}
+                </section>
+              ) : null}
+
               {highAttentionCount > 0 ? (
                 <aside className="rounded-2xl border-2 border-red-300 bg-red-50 px-5 py-5 text-red-950" role="note">
                   <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-red-800">
@@ -267,33 +331,39 @@ export default function ReportClient({ contractId }: { contractId: string }) {
                 </aside>
               ) : null}
 
-              {displayedItems.map((item) => {
-                const attention = attentionPresentation(item.attention_level);
-                return (
-                <article className="rounded-2xl border border-brand-border p-5" key={`${item.location}-${item.headline}`}>
-                  <span className={`inline-flex rounded-full border px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.1em] ${attention.classes}`}>
-                    {attention.label}
-                  </span>
-                  <h2 className="font-fraunces text-xl font-semibold text-brand-indigo">{item.headline}</h2>
-                  <p className="mt-1 text-xs font-bold uppercase tracking-[0.1em] text-brand-muted">{item.location}</p>
-                  {isAnalysisItem(item) ? (
-                    <div className="mt-4 space-y-3 text-sm leading-6">
-                      <p><strong>In plain English:</strong> {item.legal_gibberish}</p>
-                      <p><strong>What it means:</strong> {item.danger}</p>
-                      <p><strong>How to use this:</strong> {item.fix}</p>
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm font-semibold text-brand-action">Explanation included in the full report.</p>
-                  )}
-                </article>
-                );
-              })}
+              {highAttentionItems.map((item) => (
+                <FindingCard item={item} key={`${item.location}-${item.headline}`} />
+              ))}
+
+              {state.data.report?.protections?.length ? (
+                <section className="rounded-2xl border-2 border-teal-200 bg-teal-50 px-5 py-5 text-teal-950">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-teal-800">
+                    Protections in your contract
+                  </p>
+                  <div className="mt-4 space-y-4">
+                    {state.data.report.protections.map((protection) => (
+                      <article key={`${protection.location}-${protection.headline}`}>
+                        <h2 className="font-fraunces text-xl font-semibold">{protection.headline}</h2>
+                        <p className="mt-1 text-xs font-bold uppercase tracking-[0.1em] text-teal-800">{protection.location}</p>
+                        <p className="mt-2 text-sm leading-6">{protection.explanation}</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              {remainingItems.map((item) => (
+                <FindingCard item={item} key={`${item.location}-${item.headline}`} />
+              ))}
 
               {!state.data.paid && !state.data.full_report_preview ? (
                 <div className="rounded-2xl bg-brand-canvas-deep px-6 py-6">
                   <h2 className="font-fraunces text-2xl font-semibold text-brand-indigo">Unlock the complete explanation</h2>
                   <p className="mt-2 text-sm leading-6 text-brand-ink">
                     Payment unlocks the report already prepared for this contract. This private link remains your recovery key.
+                  </p>
+                  <p className="mt-3 text-sm font-bold text-brand-indigo">
+                    Beta tester? You can add your promo code in secure checkout.
                   </p>
                   {state.data.checkout_enabled && state.data.checkout_token ? (
                     <button
@@ -310,7 +380,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
                 </div>
               ) : null}
 
-              {state.data.payment_status === "unpaid" ? (
+              {state.data.payment_status === "unpaid" && !state.data.local_fixture ? (
                 <div className="border-t border-brand-border pt-5">
                   <button
                     className="text-sm font-bold text-red-800 underline decoration-red-300 underline-offset-4 disabled:opacity-60"

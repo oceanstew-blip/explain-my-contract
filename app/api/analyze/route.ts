@@ -8,10 +8,12 @@ import { z } from "zod";
 import {
   createAnalysisPreview,
   getAnalysisConfig,
+  type AnalysisResult,
   validateAnalysisResult,
 } from "@/lib/analysis-config";
 import { hasAcknowledgedAnalysisDisclaimer } from "@/lib/analysis-disclaimer";
 import { analysisIntentSchema } from "@/lib/analysis-intent";
+import { reviewPerspectiveSchema } from "@/lib/review-perspective";
 import {
   AnalysisRateLimitUnavailableError,
   consumeAnalysisRateLimit,
@@ -28,6 +30,7 @@ import {
   isRetryableGeminiError,
   withGeminiRetry,
 } from "@/lib/gemini-retry";
+import { generateOpenAIAnalysis } from "@/lib/openai-analysis";
 import {
   errorResponse,
   getRequestId,
@@ -46,6 +49,8 @@ import {
 } from "@/lib/turnstile";
 
 export const runtime = "nodejs";
+
+const LOCAL_TURNSTILE_TEST_TOKEN = "local-development-turnstile-bypass";
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_EXTRACTED_CHARACTERS = 750_000;
@@ -118,6 +123,17 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const intent = intentResult.data;
+    const perspectiveResult = reviewPerspectiveSchema.safeParse(
+      formData.get("review_perspective"),
+    );
+    if (!perspectiveResult.success) {
+      return errorResponse(
+        requestId,
+        "Tell us which person, business, or prospective contract role you are reviewing this for.",
+        400,
+      );
+    }
+    const reviewPerspective = perspectiveResult.data;
     if (
       !hasAcknowledgedAnalysisDisclaimer(
         formData.get("disclaimer_acknowledged"),
@@ -139,9 +155,13 @@ export async function POST(request: Request): Promise<Response> {
         503,
       );
     }
+    const localTurnstileTestBypass =
+      process.env.NODE_ENV === "development" &&
+      environment.TURNSTILE_TEST_MODE === "true" &&
+      turnstileToken === LOCAL_TURNSTILE_TEST_TOKEN;
     if (
       typeof turnstileToken !== "string" ||
-      !(await verifyTurnstileToken({
+      (!localTurnstileTestBypass && !(await verifyTurnstileToken({
         token: turnstileToken,
         secret: environment.TURNSTILE_SECRET,
         expectedAction: "analyze_contract",
@@ -150,7 +170,7 @@ export async function POST(request: Request): Promise<Response> {
         ),
         remoteIp,
         testMode: environment.TURNSTILE_TEST_MODE === "true",
-      }))
+      })))
     ) {
       return errorResponse(
         requestId,
@@ -243,70 +263,107 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    const analysisConfig = getAnalysisConfig(intent);
+    const analysisConfig = getAnalysisConfig(intent, reviewPerspective);
 
     const gemini = new GoogleGenAI({
       apiKey: environment.GEMINI_API_KEY,
     });
     const geminiModels = getGeminiModelCandidates(environment.GEMINI_MODEL);
 
-    const validatedResult = await withGeminiRetry(
-      async ({ attempt }) => {
-        const geminiResponse = await gemini.models.generateContent({
-          model: geminiModels[attempt - 1],
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: [
-                    analysisConfig.userInstruction,
-                    "",
-                    "<contract_text>",
-                    extractedText,
-                    "</contract_text>",
-                  ].join("\n"),
-                },
-              ],
-            },
-          ],
-          config: {
-            abortSignal: request.signal,
-            httpOptions: {
-              timeout: environment.GEMINI_REQUEST_TIMEOUT_MS,
-            },
-            systemInstruction: analysisConfig.systemPrompt,
-            temperature: 0,
-            maxOutputTokens: 8_000,
-            responseMimeType: "application/json",
-            responseJsonSchema: analysisConfig.jsonSchema,
-          },
-        });
+    let validatedResult: AnalysisResult;
 
-        return parseAndValidateGeminiOutput(
-          geminiResponse.text,
-          (value) => validateAnalysisResult(intent, value),
-        );
-      },
-      {
-        onRetry: ({ attempt, delayMs, status }) => {
-          logServerFailure({
-            level: "warn",
-            event: "gemini_retry",
-            requestId,
-            route: "/api/analyze",
-            error: null,
-            metadata: {
-              attempt,
-              delay_ms: delayMs,
-              failed_model: geminiModels[attempt - 1],
-              next_model: geminiModels[attempt],
-              status: status ?? null,
+    try {
+      validatedResult = await withGeminiRetry(
+        async ({ attempt }) => {
+          const geminiResponse = await gemini.models.generateContent({
+            model: geminiModels[attempt - 1],
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: [
+                      analysisConfig.userInstruction,
+                      "",
+                      "<contract_text>",
+                      extractedText,
+                      "</contract_text>",
+                    ].join("\n"),
+                  },
+                ],
+              },
+            ],
+            config: {
+              abortSignal: request.signal,
+              httpOptions: {
+                timeout: environment.GEMINI_REQUEST_TIMEOUT_MS,
+              },
+              systemInstruction: analysisConfig.systemPrompt,
+              temperature: 0,
+              maxOutputTokens: 8_000,
+              responseMimeType: "application/json",
+              responseJsonSchema: analysisConfig.jsonSchema,
             },
           });
+
+          return parseAndValidateGeminiOutput(
+            geminiResponse.text,
+            (value) => validateAnalysisResult(intent, value),
+          );
         },
-      },
-    );
+        {
+          onRetry: ({ attempt, delayMs, status }) => {
+            logServerFailure({
+              level: "warn",
+              event: "gemini_retry",
+              requestId,
+              route: "/api/analyze",
+              error: null,
+              metadata: {
+                attempt,
+                delay_ms: delayMs,
+                failed_model: geminiModels[attempt - 1],
+                next_model: geminiModels[attempt],
+                status: status ?? null,
+              },
+            });
+          },
+        },
+      );
+    } catch (geminiError) {
+      if (!environment.OPENAI_API_KEY || !isRetryableGeminiError(geminiError)) {
+        throw geminiError;
+      }
+
+      logServerFailure({
+        level: "warn",
+        event: "analysis_provider_fallback",
+        requestId,
+        route: "/api/analyze",
+        error: null,
+        metadata: {
+          from_provider: "google_gemini",
+          to_provider: "openai",
+          model: environment.OPENAI_MODEL,
+        },
+      });
+
+      const openAIOutput = await generateOpenAIAnalysis({
+        apiKey: environment.OPENAI_API_KEY,
+        model: environment.OPENAI_MODEL,
+        systemPrompt: analysisConfig.systemPrompt,
+        userInstruction: analysisConfig.userInstruction,
+        contractText: extractedText,
+        jsonSchema: analysisConfig.jsonSchema,
+        requestId,
+        requestSignal: request.signal,
+        timeoutMs: environment.OPENAI_REQUEST_TIMEOUT_MS,
+      });
+      validatedResult = parseAndValidateGeminiOutput(
+        openAIOutput,
+        (value) => validateAnalysisResult(intent, value),
+      );
+    }
 
     const preview = createAnalysisPreview(validatedResult);
     const recoveryToken = createReportRecoveryToken();
@@ -395,7 +452,7 @@ export async function POST(request: Request): Promise<Response> {
     if (isRetryableGeminiError(error)) {
       return errorResponse(
         requestId,
-        "The analysis service is temporarily busy. Please try again shortly.",
+        "We tried more than one analysis model, but the service is still busy. You were not charged. Please wait a few minutes and try again.",
         503,
         { "Retry-After": "10" },
       );

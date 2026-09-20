@@ -19,6 +19,10 @@ import {
 } from "@/lib/report-deletion";
 import { createReportDelivery } from "@/lib/report-delivery";
 import { isReportExpired } from "@/lib/report-retention";
+import {
+  getLocalReportFixture,
+  isLocalReportFixtureId,
+} from "@/lib/local-report-fixture";
 import { getReportEnvironment } from "@/lib/server-env";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -42,6 +46,20 @@ export async function GET(
 
   if (!parsedContractId.success || !recoveryToken) {
     return errorResponse(requestId, "This report link is invalid.", 403);
+  }
+
+  if (
+    process.env.NODE_ENV === "development" &&
+    process.env.LOCAL_FULL_REPORT_PREVIEW === "true" &&
+    isLocalReportFixtureId(parsedContractId.data)
+  ) {
+    const localDelivery = getLocalReportFixture(parsedContractId.data, recoveryToken);
+    if (!localDelivery) {
+      return errorResponse(requestId, "This report link is invalid.", 403);
+    }
+    return jsonResponse(requestId, localDelivery, {
+      headers: { "Cache-Control": "no-store, private" },
+    });
   }
 
   try {

@@ -26,6 +26,14 @@ export function getAnalysisEnvironment() {
       .min(1_000)
       .max(120_000)
       .default(45_000),
+    OPENAI_API_KEY: nonEmptyString.optional(),
+    OPENAI_MODEL: nonEmptyString.default("gpt-5.6-terra"),
+    OPENAI_REQUEST_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(180_000)
+      .default(90_000),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: nonEmptyString,
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     RATE_LIMIT_HMAC_SECRET: nonEmptyString.min(32),
@@ -51,8 +59,9 @@ export function getCheckoutEnvironment() {
     APP_BASE_URL: z.url(),
     CHECKOUT_TOKEN_SECRET: nonEmptyString.min(32),
     STRIPE_CHECKOUT_ENABLED: z.literal("true"),
-    STRIPE_PRICE_ID: nonEmptyString.startsWith("price_"),
-    STRIPE_SECRET_KEY: nonEmptyString.startsWith("sk_"),
+    STRIPE_PRICE_ID_SHORT: nonEmptyString.startsWith("price_"),
+    STRIPE_PRICE_ID_STANDARD: nonEmptyString.startsWith("price_"),
+    STRIPE_SECRET_KEY: nonEmptyString.regex(/^(sk|rk)_/),
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     SUPABASE_SECRET_KEY: nonEmptyString,
   });
@@ -67,7 +76,7 @@ export function getReportEnvironment() {
 
 export function getStripeWebhookEnvironment() {
   return readEnvironment({
-    STRIPE_SECRET_KEY: nonEmptyString.startsWith("sk_"),
+    STRIPE_SECRET_KEY: nonEmptyString.regex(/^(sk|rk)_/),
     STRIPE_WEBHOOK_SECRET: nonEmptyString.startsWith("whsec_"),
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     SUPABASE_SECRET_KEY: nonEmptyString,

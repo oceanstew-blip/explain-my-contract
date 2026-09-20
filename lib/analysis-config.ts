@@ -24,8 +24,10 @@ const analysisItemSchema = z
 
 const agreementSnapshotSchema = z
   .object({
+    reviewed_for: z.string().trim().min(1).max(200).optional(),
     agreement_type: z.string().trim().min(1).max(200),
     provider: z.string().trim().min(1).max(200),
+    counterparty_label: z.string().trim().min(1).max(80).optional(),
     term: z.string().trim().min(1).max(300),
     what_you_get: z.array(z.string().trim().min(1).max(500)).min(1).max(12),
     what_you_pay: z.array(z.string().trim().min(1).max(500)).min(1).max(8),
@@ -36,11 +38,20 @@ const agreementSnapshotSchema = z
   })
   .strict();
 
+const protectionSchema = z
+  .object({
+    headline: z.string().trim().min(1).max(160),
+    explanation: z.string().trim().min(1).max(500),
+    location: z.string().trim().min(1).max(300),
+  })
+  .strict();
+
 const modelResultSchema = z
   .object({
     agreement_snapshot: agreementSnapshotSchema,
     total_flags: z.number().int().min(0).max(20),
     categories_found: z.array(z.string().trim().min(1).max(100)).max(10),
+    protections: z.array(protectionSchema).max(12).optional(),
     detailed_analysis: z.array(analysisItemSchema).max(20),
   })
   .strict()
@@ -92,6 +103,10 @@ const modelJsonSchema = {
       description:
         "A concise, source-grounded snapshot of the deal the person is signing or has signed.",
       properties: {
+        reviewed_for: {
+          type: "string",
+          description: "The party name or contract role whose interests this report analyzes, using the user's supplied perspective. Do not imply that an unsigned agreement has been accepted or that the relationship already exists.",
+        },
         agreement_type: {
           type: "string",
           description: "The plain-language type and purpose of the agreement.",
@@ -100,6 +115,11 @@ const modelJsonSchema = {
           type: "string",
           description:
             "The person or organization providing the principal service, product, property, or opportunity.",
+        },
+        counterparty_label: {
+          type: "string",
+          description:
+            "A concise, agreement-specific label for the provider or other principal party, such as Named landlord, Named client, or Named service provider.",
         },
         term: {
           type: "string",
@@ -132,8 +152,10 @@ const modelJsonSchema = {
         },
       },
       required: [
+        "reviewed_for",
         "agreement_type",
         "provider",
+        "counterparty_label",
         "term",
         "what_you_get",
         "what_you_pay",
@@ -152,6 +174,22 @@ const modelJsonSchema = {
       maxItems: 10,
       description: "Short category names represented by the clauses found.",
       items: { type: "string" },
+    },
+    protections: {
+      type: "array",
+      maxItems: 12,
+      description:
+        "Meaningful favorable or protective terms stated in the contract. These are not warnings.",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          headline: { type: "string", description: "A short name for the protection." },
+          explanation: { type: "string", description: "A calm, source-grounded explanation of how the term protects or benefits the user." },
+          location: { type: "string", description: "The specific section or clearest available location." },
+        },
+        required: ["headline", "explanation", "location"],
+      },
     },
     detailed_analysis: {
       type: "array",
@@ -207,6 +245,7 @@ const modelJsonSchema = {
     "agreement_snapshot",
     "total_flags",
     "categories_found",
+    "protections",
     "detailed_analysis",
   ],
 } as const;
@@ -255,6 +294,13 @@ Give only contract-supported administrative or decision-support steps. If the
 contract provides no usable step, say exactly what is absent, direct the user
 to verify the original language, and, when the uncertainty is consequential,
 consider a qualified attorney for advice about how to respond or proceed.
+
+Separately populate protections with meaningful terms that favor or protect the
+user, including ownership, refund or cure rights, penalty-free exit, mutual
+limits, approval requirements for extra charges, credential return, deletion
+obligations, or the absence of a personal guarantee. Do not count protections
+as flags and do not repeat them as warnings unless a distinct adverse term
+materially limits the protection.
 `.trim();
 
 const consideringSigningConfig = {
@@ -376,10 +422,18 @@ extra fields, a full-contract summary, or text outside the JSON object.
   resultSchema: modelResultSchema,
 } as const;
 
-export function getAnalysisConfig(intent: AnalysisIntent) {
-  return intent === "already_signed"
+export function getAnalysisConfig(
+  intent: AnalysisIntent,
+  reviewPerspective = "Perspective not provided",
+) {
+  const config = intent === "already_signed"
     ? alreadySignedConfig
     : consideringSigningConfig;
+
+  return {
+    ...config,
+    userInstruction: `${config.userInstruction}\nThe user identifies the party or prospective party whose perspective should be reviewed as: ${JSON.stringify(reviewPerspective)}. Analyze consequences and protections from that perspective. Do not silently switch sides or guess a different role. If the agreement is unsigned, describe this as the role the user would have if they sign; do not imply that the relationship already exists.`,
+  };
 }
 
 function deduplicate(values: string[]): string[] {

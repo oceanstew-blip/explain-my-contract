@@ -82,6 +82,7 @@ describe("getAnalysisConfig", () => {
         "agreement_snapshot",
         "total_flags",
         "categories_found",
+        "protections",
         "detailed_analysis",
       ]);
       expect(schema.properties.detailed_analysis.items.required).toEqual([
@@ -92,6 +93,8 @@ describe("getAnalysisConfig", () => {
         "fix",
         "location",
       ]);
+      expect(schema.properties.agreement_snapshot.required).toContain("reviewed_for");
+      expect(schema.properties.agreement_snapshot.required).toContain("counterparty_label");
     }
   });
 
@@ -136,6 +139,17 @@ describe("getAnalysisConfig", () => {
     expect(prompt).toMatch(/concrete pre-signing move/i);
     expect(prompt).toMatch(/language, limit,\s+clarification, or document/i);
     expect(prompt).toMatch(/reason\s+it resolves the identified concern/i);
+  });
+
+  it("treats the selected side as prospective before signing", () => {
+    const instruction = getAnalysisConfig(
+      "considering_signing",
+      "Morgan Vale Studio LLC, named as Agency",
+    ).userInstruction;
+
+    expect(instruction).toMatch(/party or prospective party/i);
+    expect(instruction).toMatch(/would have if they sign/i);
+    expect(instruction).toMatch(/do not imply that the relationship already exists/i);
   });
 });
 
