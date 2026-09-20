@@ -89,6 +89,9 @@ export async function GET(
     }
 
     const checkoutEnabled = process.env.STRIPE_CHECKOUT_ENABLED === "true";
+    const includeFullReportPreview =
+      process.env.NODE_ENV === "development" &&
+      process.env.LOCAL_FULL_REPORT_PREVIEW === "true";
     const checkoutTokenSecret = process.env.CHECKOUT_TOKEN_SECRET?.trim();
     const checkoutToken =
       checkoutEnabled && checkoutTokenSecret && checkoutTokenSecret.length >= 32
@@ -105,6 +108,7 @@ export async function GET(
         checkoutEnabled,
         checkoutToken,
         reportExpiresAt: contract.report_expires_at,
+        includeFullReportPreview,
       }),
       { headers: { "Cache-Control": "no-store, private" } },
     );

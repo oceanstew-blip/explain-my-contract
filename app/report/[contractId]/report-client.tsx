@@ -8,6 +8,7 @@ import type { AnalysisIntent } from "@/lib/analysis-intent";
 
 type AnalysisItem = {
   headline: string;
+  attention_level: "high_attention" | "important" | "document_quality";
   legal_gibberish: string;
   danger: string;
   fix: string;
@@ -26,10 +27,26 @@ type AnalysisReport = {
   informational_notice?: string;
 };
 
-type PreviewItem = Pick<AnalysisItem, "headline" | "location">;
+type PreviewItem = Pick<AnalysisItem, "headline" | "attention_level" | "location">;
 
 function isAnalysisItem(item: AnalysisItem | PreviewItem): item is AnalysisItem {
   return "legal_gibberish" in item && "danger" in item && "fix" in item;
+}
+
+const attentionOrder = {
+  high_attention: 0,
+  important: 1,
+  document_quality: 2,
+} as const;
+
+function attentionPresentation(level: AnalysisItem["attention_level"]) {
+  if (level === "high_attention") {
+    return { label: "High attention", classes: "border-red-200 bg-red-50 text-red-900" };
+  }
+  if (level === "document_quality") {
+    return { label: "Document-quality concern", classes: "border-sky-200 bg-sky-50 text-sky-900" };
+  }
+  return { label: "Important to understand", classes: "border-amber-200 bg-amber-50 text-amber-900" };
 }
 
 type ReportResponse = {
@@ -37,6 +54,7 @@ type ReportResponse = {
   request_id?: string;
   intent: AnalysisIntent;
   paid: boolean;
+  full_report_preview: boolean;
   payment_status: string;
   checkout_enabled: boolean;
   checkout_token?: string;
@@ -59,6 +77,14 @@ export default function ReportClient({ contractId }: { contractId: string }) {
   >({ status: "loading" });
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
+  const displayedItems = state.status === "ready"
+    ? [...(state.data.report?.detailed_analysis ?? state.data.preview.flag_previews)].sort(
+        (a, b) => attentionOrder[a.attention_level] - attentionOrder[b.attention_level],
+      )
+    : [];
+  const highAttentionCount = displayedItems.filter(
+    (item) => item.attention_level === "high_attention",
+  ).length;
 
   useEffect(() => {
     const storageKey = `explain-my-contract:${contractId}`;
@@ -206,7 +232,11 @@ export default function ReportClient({ contractId }: { contractId: string }) {
           <section className="mt-8 overflow-hidden rounded-[1.75rem] border border-brand-border bg-white shadow-xl shadow-brand-indigo/8">
             <header className="bg-brand-indigo px-6 py-8 text-white sm:px-9">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-canvas-deep">
-                {state.data.paid ? "Your full report" : "Your private report preview"}
+                {state.data.paid
+                  ? "Your full report"
+                  : state.data.full_report_preview
+                    ? "Local full report preview"
+                    : "Your private report preview"}
               </p>
               <h1 className="mt-3 font-fraunces text-4xl font-semibold">
                 {state.data.preview.agreement_snapshot.agreement_type}
@@ -223,23 +253,43 @@ export default function ReportClient({ contractId }: { contractId: string }) {
             </header>
 
             <div className="space-y-4 px-5 py-6 sm:px-7">
-              {(state.data.report?.detailed_analysis ?? state.data.preview.flag_previews).map((item) => (
+              {highAttentionCount > 0 ? (
+                <aside className="rounded-2xl border-2 border-red-300 bg-red-50 px-5 py-5 text-red-950" role="note">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-red-800">
+                    Report-level attention
+                  </p>
+                  <h2 className="mt-2 font-fraunces text-2xl font-semibold">
+                    High attention recommended
+                  </h2>
+                  <p className="mt-2 text-sm leading-6">
+                    According to your contract, this agreement includes {highAttentionCount} {highAttentionCount === 1 ? "term" : "terms"} with significant financial or practical consequences. Review the original language carefully and consider a qualified attorney if you are deciding how to respond or proceed.
+                  </p>
+                </aside>
+              ) : null}
+
+              {displayedItems.map((item) => {
+                const attention = attentionPresentation(item.attention_level);
+                return (
                 <article className="rounded-2xl border border-brand-border p-5" key={`${item.location}-${item.headline}`}>
+                  <span className={`inline-flex rounded-full border px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.1em] ${attention.classes}`}>
+                    {attention.label}
+                  </span>
                   <h2 className="font-fraunces text-xl font-semibold text-brand-indigo">{item.headline}</h2>
                   <p className="mt-1 text-xs font-bold uppercase tracking-[0.1em] text-brand-muted">{item.location}</p>
                   {isAnalysisItem(item) ? (
                     <div className="mt-4 space-y-3 text-sm leading-6">
                       <p><strong>In plain English:</strong> {item.legal_gibberish}</p>
                       <p><strong>What it means:</strong> {item.danger}</p>
-                      <p><strong>Your contract-based next step:</strong> {item.fix}</p>
+                      <p><strong>How to use this:</strong> {item.fix}</p>
                     </div>
                   ) : (
                     <p className="mt-3 text-sm font-semibold text-brand-action">Explanation included in the full report.</p>
                   )}
                 </article>
-              ))}
+                );
+              })}
 
-              {!state.data.paid ? (
+              {!state.data.paid && !state.data.full_report_preview ? (
                 <div className="rounded-2xl bg-brand-canvas-deep px-6 py-6">
                   <h2 className="font-fraunces text-2xl font-semibold text-brand-indigo">Unlock the complete explanation</h2>
                   <p className="mt-2 text-sm leading-6 text-brand-ink">

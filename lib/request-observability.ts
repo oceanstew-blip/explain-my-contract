@@ -74,6 +74,7 @@ export function logServerFailure(options: {
     ...options.metadata,
   };
 
-  if (options.level === "warn") console.warn(payload);
-  else console.error(payload);
+  const serializedPayload = JSON.stringify(payload);
+  if (options.level === "warn") console.warn(serializedPayload);
+  else console.error(serializedPayload);
 }

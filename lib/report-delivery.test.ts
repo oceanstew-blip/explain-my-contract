@@ -16,6 +16,7 @@ const fullReport = {
   detailed_analysis: [
     {
       headline: "Uncapped indemnity",
+      attention_level: "high_attention",
       legal_gibberish: "Paid translation",
       danger: "Paid consequence",
       fix: "Paid next step",
@@ -41,8 +42,23 @@ describe("report delivery policy", () => {
     });
 
     expect(delivery).not.toHaveProperty("report");
+    expect(delivery.full_report_preview).toBe(false);
     expect(delivery).toHaveProperty("checkout_token", "checkout-capability");
     expect(JSON.stringify(delivery.preview)).not.toContain("Paid translation");
+  });
+
+  it("can show the full report in an explicit local preview without marking it paid", () => {
+    const delivery = createReportDelivery({
+      ...baseInput,
+      paymentStatus: "unpaid",
+      checkoutEnabled: false,
+      includeFullReportPreview: true,
+    });
+
+    expect(delivery.paid).toBe(false);
+    expect(delivery.full_report_preview).toBe(true);
+    expect(delivery).toHaveProperty("report", fullReport);
+    expect(delivery.checkout_enabled).toBe(false);
   });
 
   it("includes the full report after payment and stops issuing checkout access", () => {

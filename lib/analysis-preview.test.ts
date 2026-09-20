@@ -18,6 +18,7 @@ describe("analysis preview", () => {
       detailed_analysis: [
         {
           headline: "Uncapped indemnity",
+          attention_level: "high_attention",
           legal_gibberish: "Paid translation",
           danger: "Paid consequence",
           fix: "Paid next step",
@@ -29,7 +30,11 @@ describe("analysis preview", () => {
     const preview = createAnalysisPreview(fullReport);
 
     expect(preview.flag_previews).toEqual([
-      { headline: "Uncapped indemnity", location: "Section 8" },
+      {
+        headline: "Uncapped indemnity",
+        attention_level: "high_attention",
+        location: "Section 8",
+      },
     ]);
     expect(JSON.stringify(preview)).not.toContain("Paid translation");
     expect(JSON.stringify(preview)).not.toContain("Paid consequence");

@@ -10,16 +10,16 @@ describe("Gemini retry handling", () => {
   it("uses three current stable models by default", () => {
     expect(getGeminiModelCandidates()).toEqual([
       "gemini-3.8-flash",
-      "gemini-3.7-flash",
-      "gemini-3.5-flash",
+      "gemini-3.6-flash",
+      "gemini-3.1-flash-lite",
     ]);
   });
 
   it("honors a configured primary model without duplicating it", () => {
-    expect(getGeminiModelCandidates(" gemini-3.7-flash ")).toEqual([
-      "gemini-3.7-flash",
+    expect(getGeminiModelCandidates(" gemini-3.6-flash ")).toEqual([
+      "gemini-3.6-flash",
       "gemini-3.8-flash",
-      "gemini-3.5-flash",
+      "gemini-3.1-flash-lite",
     ]);
   });
 

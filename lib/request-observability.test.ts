@@ -44,14 +44,16 @@ describe("request observability", () => {
       error,
     });
 
-    expect(consoleError).toHaveBeenCalledWith({
-      event: "analysis_failed",
-      request_id: "request_123",
-      route: "/api/analyze",
-      error_name: "Error",
-      error_code: "DB_DOWN",
-      error_status: 503,
-    });
+    expect(consoleError).toHaveBeenCalledWith(
+      JSON.stringify({
+        event: "analysis_failed",
+        request_id: "request_123",
+        route: "/api/analyze",
+        error_name: "Error",
+        error_code: "DB_DOWN",
+        error_status: 503,
+      }),
+    );
     expect(JSON.stringify(consoleError.mock.calls)).not.toContain(
       "contract text must stay private",
     );

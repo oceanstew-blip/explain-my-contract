@@ -14,6 +14,7 @@ type ReportDeliveryInput = {
   checkoutEnabled: boolean;
   checkoutToken?: string;
   reportExpiresAt: string;
+  includeFullReportPreview?: boolean;
 };
 
 export function createReportDelivery(input: ReportDeliveryInput) {
@@ -21,6 +22,7 @@ export function createReportDelivery(input: ReportDeliveryInput) {
   const paymentStatus = paymentStatusSchema.parse(input.paymentStatus);
   const report = validateAnalysisResult(intent, input.fullReport);
   const paid = paymentStatus === "paid";
+  const fullReportPreview = !paid && input.includeFullReportPreview === true;
   const checkoutEnabled = input.checkoutEnabled && canStartCheckout(paymentStatus);
   const reportExpiresAt = parseReportExpiration(input.reportExpiresAt).toISOString();
 
@@ -30,7 +32,8 @@ export function createReportDelivery(input: ReportDeliveryInput) {
     payment_status: paymentStatus,
     paid,
     preview: createAnalysisPreview(report),
-    ...(paid ? { report } : {}),
+    ...(paid || fullReportPreview ? { report } : {}),
+    full_report_preview: fullReportPreview,
     checkout_enabled: checkoutEnabled,
     report_expires_at: reportExpiresAt,
     ...(checkoutEnabled && input.checkoutToken

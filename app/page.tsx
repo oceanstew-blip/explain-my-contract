@@ -22,6 +22,7 @@ type SubmissionState =
 
 type AnalysisItem = {
   headline: string;
+  attention_level: "high_attention" | "important" | "document_quality";
   legal_gibberish: string;
   danger: string;
   fix: string;
@@ -44,7 +45,7 @@ type AnalysisResult = {
 };
 
 type AnalysisPreview = Omit<AnalysisResult, "detailed_analysis"> & {
-  flag_previews: Array<Pick<AnalysisItem, "headline" | "location">>;
+  flag_previews: Array<Pick<AnalysisItem, "headline" | "attention_level" | "location">>;
 };
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -213,6 +214,13 @@ function PreviewPanel({
             key={`${item.location}-${item.headline}`}
           >
             <div>
+              <p className="mb-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-brand-action">
+                {item.attention_level === "high_attention"
+                  ? "High attention"
+                  : item.attention_level === "document_quality"
+                    ? "Document-quality concern"
+                    : "Important to understand"}
+              </p>
               <p className="font-fraunces text-lg font-semibold text-brand-indigo">
                 {item.headline}
               </p>
@@ -307,7 +315,7 @@ export default function Home() {
       return;
     }
 
-    turnstileWidgetIdRef.current = window.turnstile.render(
+    const widgetId = window.turnstile.render(
       turnstileContainerRef.current,
       {
         sitekey: TURNSTILE_SITE_KEY,
@@ -317,7 +325,21 @@ export default function Home() {
         "expired-callback": () => setTurnstileToken(""),
       },
     );
-  }, [file, turnstileReady]);
+    turnstileWidgetIdRef.current = widgetId;
+
+    return () => {
+      if (window.turnstile) {
+        try {
+          window.turnstile.remove(widgetId);
+        } catch {
+          // The provider may already have discarded a detached test widget.
+        }
+      }
+      if (turnstileWidgetIdRef.current === widgetId) {
+        turnstileWidgetIdRef.current = null;
+      }
+    };
+  }, [file, submission.status, turnstileReady]);
 
   useEffect(() => {
     const revealTargets = Array.from(
@@ -406,10 +428,6 @@ export default function Home() {
   }
 
   function resetFile() {
-    if (turnstileWidgetIdRef.current && window.turnstile) {
-      window.turnstile.remove(turnstileWidgetIdRef.current);
-      turnstileWidgetIdRef.current = null;
-    }
     setFile(null);
     setDisclaimerAcknowledged(false);
     setTurnstileToken("");
@@ -419,7 +437,8 @@ export default function Home() {
 
   async function processDocument(intent: AnalysisIntent) {
     if (!file) return;
-    setSubmission({ status: "submitting", intent });
+
+    const submittedTurnstileToken = turnstileToken;
 
     const formData = new FormData();
     formData.set("file", file);
@@ -428,7 +447,10 @@ export default function Home() {
       "disclaimer_acknowledged",
       disclaimerAcknowledged ? "true" : "false",
     );
-    formData.set("turnstile_token", turnstileToken);
+    formData.set("turnstile_token", submittedTurnstileToken);
+
+    setTurnstileToken("");
+    setSubmission({ status: "submitting", intent });
 
     try {
       const response = await fetch("/api/analyze", {
@@ -474,11 +496,6 @@ export default function Home() {
             ? error.message
             : "The contract could not be analyzed. Try again.",
       });
-    } finally {
-      if (turnstileWidgetIdRef.current && window.turnstile) {
-        window.turnstile.reset(turnstileWidgetIdRef.current);
-      }
-      setTurnstileToken("");
     }
   }
 
@@ -735,7 +752,8 @@ export default function Home() {
                 Reading your contract
               </h2>
               <p className="mt-2 text-sm text-brand-muted">
-                Explain My Contract Now is scanning the document.
+                Most reports are ready in under a minute. Keep this page open;
+                you will not be charged if the analysis fails.
               </p>
             </div>
           ) : submission.status === "success" ? (
