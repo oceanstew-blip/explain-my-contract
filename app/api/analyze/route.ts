@@ -35,6 +35,7 @@ import {
 import {
   generateAndValidateOpenAIAnalysis,
   generateOpenAIAnalysis,
+  OpenAIAnalysisError,
 } from "@/lib/openai-analysis";
 import {
   errorResponse,
@@ -513,6 +514,25 @@ export async function POST(request: Request): Promise<Response> {
         requestId,
         "Analysis is temporarily unavailable. Please try again shortly.",
         503,
+      );
+    }
+
+    if (error instanceof OpenAIAnalysisError) {
+      return jsonResponse(
+        requestId,
+        {
+          error: "The backup analysis service could not complete this report. Please try again.",
+          request_id: requestId,
+          ...(process.env.DEPLOY_CONTEXT === "deploy-preview"
+            ? {
+                diagnostic: {
+                  provider: "openai",
+                  status: error.status ?? null,
+                },
+              }
+            : {}),
+        },
+        { status: 502, headers: { "Cache-Control": "no-store" } },
       );
     }
 
