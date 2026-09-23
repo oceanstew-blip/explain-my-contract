@@ -18,7 +18,11 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 function getDeployPreviewDiagnostic(error: unknown) {
-  if (process.env.CONTEXT !== "deploy-preview") return {};
+  if (
+    (process.env.DEPLOY_CONTEXT ?? process.env.CONTEXT) !== "deploy-preview"
+  ) {
+    return {};
+  }
 
   if (error instanceof DatabaseReadinessError) {
     return {

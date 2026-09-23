@@ -45,7 +45,7 @@ export function getAnalysisEnvironment() {
 
   assertSafeAnalysisSecurityConfig({
     nodeEnv: process.env.NODE_ENV,
-    deployContext: process.env.CONTEXT,
+    deployContext: process.env.DEPLOY_CONTEXT ?? process.env.CONTEXT,
     siteKey: environment.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     secret: environment.TURNSTILE_SECRET,
     testMode: environment.TURNSTILE_TEST_MODE === "true",
