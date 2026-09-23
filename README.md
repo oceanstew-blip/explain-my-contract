@@ -43,6 +43,21 @@ to remove expired content in bounded batches. These are preview-stage product
 defaults, not legal advice; verify them against written privacy and accounting
 procedures before launch.
 
+## Transactional email setup
+
+Recommended product addresses for the Tami Stewart Consults domain:
+
+- Sender: `Explain My Contract Now <reports@tamistewartconsults.com>`
+- Monitored reply-to: `help@tamistewartconsults.com`
+
+Inbound mail is separate from transactional sending. Confirm that both
+addresses route to a monitored inbox, then verify the sending domain with the
+transactional provider before setting `REPORT_EMAIL_ENABLED=true`. Configure
+`REPORT_LINK_TOKEN_SECRET` as a unique server-only value of at least 32
+characters. The emailed report URL carries its signed access token in the URL
+fragment so ordinary HTTP requests and link previews do not send that token to
+the server; the report client exchanges it through the authenticated API call.
+
 ## Verification
 
 ```bash
