@@ -17,6 +17,7 @@ import {
 import { sendReportReadyEmail } from "@/lib/report-email";
 import { createReportLinkToken } from "@/lib/report-link-token";
 import { createStripe } from "@/lib/stripe";
+import { completedCheckoutUnlocksReport } from "@/lib/stripe-checkout-completion";
 import { paymentStateChangeFromEvent } from "@/lib/stripe-payment-state";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -31,7 +32,7 @@ function paidCheckoutSession(event: Stripe.Event): Stripe.Checkout.Session | nul
   }
 
   const session = event.data.object;
-  return session.payment_status === "paid" ? session : null;
+  return completedCheckoutUnlocksReport(session) ? session : null;
 }
 
 export async function POST(request: Request): Promise<Response> {

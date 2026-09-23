@@ -75,6 +75,8 @@ The payment code is intentionally unavailable until every item below is complete
 10. Only then set `REPORT_EMAIL_ENABLED=true` and `STRIPE_CHECKOUT_ENABLED=true`.
 
 The browser never decides whether a payment succeeded. Only a signature-verified Stripe webhook can mark a contract paid.
+Completed 100%-off Checkout Sessions are accepted in Stripe's `paid` or
+`no_payment_required` state; an `unpaid` session never unlocks a report.
 
 Required webhook events:
 
