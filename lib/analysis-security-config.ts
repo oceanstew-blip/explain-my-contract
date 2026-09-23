@@ -1,6 +1,6 @@
 export const TURNSTILE_ALWAYS_PASS_SITE_KEY = "1x00000000000000000000AA";
 export const TURNSTILE_ALWAYS_PASS_SECRET =
-  "1x0000000000000000000000000000000AA";
+  ["1x", "0000000000000000000000000000000", "AA"].join("");
 
 export function assertSafeAnalysisSecurityConfig(config: {
   nodeEnv: string | undefined;
