@@ -482,10 +482,14 @@ export async function POST(request: Request): Promise<Response> {
     });
 
     if (error instanceof z.ZodError) {
+      const invalidFields = error.issues
+        .map((issue) => issue.path.join(".") || "unknown")
+        .slice(0, 10)
+        .join(", ");
       return errorResponse(
         requestId,
-        "The analysis service returned an unexpected result.",
-        502,
+        `The analysis service is missing or has invalid server configuration: ${invalidFields}.`,
+        503,
       );
     }
 
