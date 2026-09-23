@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(20);
 
 create temporary table retention_test_ids (
   label text primary key,
@@ -49,7 +49,9 @@ from public.create_contract_analysis(
   'considering_signing',
   '{}'::jsonb,
   '{}'::jsonb,
-  repeat('a', 64)
+  repeat('a', 64),
+  'rental_lease',
+  'Tenant'
 );
 
 select ok(
@@ -65,6 +67,24 @@ select ok(
     where label = 'created'
   ),
   'new unpaid report expires in 24 hours'
+);
+select is(
+  (
+    select contract_type
+    from public.contracts
+    where id = (select contract_id from retention_test_ids where label = 'created')
+  ),
+  'rental_lease'::text,
+  'analysis creation stores the selected contract category'
+);
+select is(
+  (
+    select review_perspective
+    from public.contracts
+    where id = (select contract_id from retention_test_ids where label = 'created')
+  ),
+  'Tenant'::text,
+  'analysis creation stores the reviewed role'
 );
 
 update public.contracts

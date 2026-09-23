@@ -447,7 +447,9 @@ export async function POST(request: Request): Promise<Response> {
         p_full_report: validatedResult,
         p_page_count: pageCount,
         p_recovery_token_hash: hashReportRecoveryToken(recoveryToken),
+        p_contract_type: contractType,
         p_intent: intent,
+        p_review_perspective: reviewPerspective,
         p_tease_summary: preview,
       },
     );
