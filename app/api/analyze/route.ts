@@ -463,11 +463,22 @@ export async function POST(request: Request): Promise<Response> {
       },
     );
   } catch (error) {
+    const validationMetadata =
+      error instanceof z.ZodError
+        ? {
+            validation_issue_count: error.issues.length,
+            validation_issue_paths: error.issues
+              .map((issue) => issue.path.join(".") || "root")
+              .slice(0, 10)
+              .join(","),
+          }
+        : undefined;
     logServerFailure({
       event: "analysis_failed",
       requestId,
       route: "/api/analyze",
       error,
+      metadata: validationMetadata,
     });
 
     if (error instanceof z.ZodError) {
