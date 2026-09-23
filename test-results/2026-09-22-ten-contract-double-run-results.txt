@@ -1,0 +1,801 @@
+EXPLAIN MY CONTRACT NOW
+TEN-CONTRACT, TWO-PASS VIABILITY TEST
+Detailed Results — September 22, 2026
+
+======================================================================
+CURRENT RELEASE-CANDIDATE VERDICT
+======================================================================
+
+FINAL RESULT AFTER SAME-NIGHT FIX AND RETEST: PASS
+- All ten fictional contracts produced two successful stored and retrieved
+  reports after the failed final equipment-lease run was replaced by a
+  successful targeted rerun.
+- False real-signature claims: 0/20.
+- Previously inconsistent renewal and workflow-ownership coverage appeared in
+  both required runs.
+- Balanced payment schedules were calibrated as important rather than high
+  attention; adverse lock-in, liability, ownership, and data risks remained
+  high attention.
+- Final automated verification: 20 test files, 138 tests, ESLint, TypeScript,
+  webpack production build, and git diff validation all passed.
+- Stripe checkout remained disabled. No order, deployment, merge, or
+  live-payment activation was performed.
+
+The implementation is ready for code review as a release candidate. Stripe
+test-mode payment/access verification and deployment approval remain separate
+release gates.
+
+The sections below preserve the initial baseline failure, remediation work, and
+retest evidence so the outcome is auditable.
+
+======================================================================
+INITIAL BASELINE VERDICT — SUPERSEDED BY THE RETEST ABOVE
+======================================================================
+
+Operational result: PASS WITH EVIDENCE
+- 20 of 20 approved analysis requests returned HTTP 201.
+- 20 of 20 private reports were retrieved successfully.
+- 10 of 10 contracts completed twice.
+- No harness retry was needed.
+- Seven requests used the OpenAI fallback after retryable Gemini failures.
+- Thirteen requests completed through the Gemini model sequence.
+- Every stored report remained unpaid; checkout was disabled for this test.
+- No Stripe order was started or completed.
+- No deployment, merge, push, or live-payment activation was performed.
+
+Content-quality result: CONDITIONAL / NOT LAUNCH-READY YET
+- 18 of 20 runs met the answer key's minimum adjusted score of 14/16.
+- Mean adjusted score: 15.0/16 (93.75%).
+- Pass 1: 10/10 at or above 14; mean 15.4.
+- Pass 2: 8/10 at or above 14; mean 14.6.
+- The two below-threshold runs were Coaching Fair One pass 2 (13/16)
+  and CRM Implementation Adverse pass 2 (13/16).
+- The largest repeated accuracy problem was false signature language. Nine
+  reports said or implied "your signature" created obligations even though
+  every source contract identified its signature as simulated.
+- The system reliably found hostile clauses in the adverse contracts and
+  generally surfaced protections in balanced contracts. However, severity
+  calibration is still uneven: ordinary payment schedules and balanced exit
+  provisions were sometimes presented as high-attention risks.
+- Important content was inconsistent between repeated runs. Examples include
+  omission of the explicit no-auto-renewal protection in Coaching Fair One
+  pass 2 and omission of the Vendor's exclusive workflow ownership in CRM
+  Implementation Adverse pass 2.
+
+Bottom line: the analysis/fallback/storage pipeline demonstrated technical
+viability, and the reports are often useful. The product should not be treated
+as production-ready until simulated-signature handling, repeat-run completeness,
+and severity calibration are corrected and the same pack passes again.
+
+This report evaluates a software product using fictional contracts. It is not
+legal advice and does not evaluate whether any clause is legally enforceable.
+
+======================================================================
+AUTHORIZATION AND SCOPE
+======================================================================
+
+Authorized by Tami Stewart:
+- Send the ten fictional test contracts to Google Gemini and, when needed,
+  OpenAI.
+- Temporarily store their test reports in Supabase.
+- Run each contract twice.
+
+Explicit restrictions honored:
+- Do not deploy.
+- Do not merge.
+- Do not enable live payments.
+- Do not complete Stripe orders.
+
+Test conditions:
+- Application: local preview at http://localhost:3001
+- Analysis intent: already_signed
+- Perspective: the named client/provider in each fictional contract
+- Full local report preview: enabled
+- Stripe checkout: disabled
+- Analysis rate limit raised locally for the approved test only
+- Source files: 10 fictional one-page PDF contracts plus the two-page testing
+  guide and answer key
+
+The test used the application's actual upload, extraction, analysis, database
+storage, and private-report retrieval path. It did not use fixture reports.
+
+======================================================================
+SCORING METHOD
+======================================================================
+
+The supplied answer key awards 0-2 points for each of eight dimensions:
+1. Accurate parties and term
+2. Accurate price
+3. Accurate deliverables
+4. Accurate deadlines
+5. Accurate renewal and exit terms
+6. Accurate restrictions and obligations
+7. Accurate privacy and data terms
+8. Fair provisions and protections surfaced
+
+Maximum: 16 points per run.
+
+The supplied deductions were applied as written:
+- Minus 2 for an invented clause.
+- Minus 2 for an invented legal conclusion.
+- Minus 2 for falsely claiming a simulated signature is real.
+
+Target: at least 14/16 per document.
+
+Scoring notes:
+- Information may appear in the snapshot, findings, or protections to receive
+  credit. It does not have to appear in every section.
+- A point was removed when a material benchmark item was omitted or materially
+  weakened.
+- The false-signature deduction was applied when a report said "your signature"
+  committed or bound the reader. The source documents state that signatures
+  are simulated, so this is a factual error even though the test's selected
+  user intent was "already signed."
+- No legal-enforceability conclusion was credited or inferred by this review.
+
+======================================================================
+SYSTEM PERFORMANCE AND PROVIDER BEHAVIOR
+======================================================================
+
+Total analysis requests: 20
+Successful analysis responses: 20 (100%)
+Successful report retrievals: 20 (100%)
+Failed final responses: 0
+Harness retries: 0
+
+Provider completion:
+- Gemini sequence completed: 13/20 (65%)
+- OpenAI fallback completed: 7/20 (35%)
+
+OpenAI fallback runs:
+- Pass 1: Therapist Network Balanced
+- Pass 1: Bathroom Remodel
+- Pass 1: Coaching Adverse
+- Pass 1: Consulting Balanced
+- Pass 1: Equipment Lease Mixed
+- Pass 2: Therapist Network Adverse
+- Pass 2: Equipment Lease Mixed
+
+Observed Gemini retryable conditions:
+- HTTP 503 busy responses
+- HTTP 429 rate-limit responses
+- Model rotation through the configured Gemini sequence before successful
+  Gemini completion or fallback
+
+Elapsed analysis time across all 20 runs:
+- Total: 879.482 seconds (14 minutes, 39.482 seconds)
+- Mean: 43.974 seconds
+- Median: 31.049 seconds
+- Minimum: 14.552 seconds
+- 95th percentile: 81.381 seconds
+- Maximum: 96.921 seconds
+
+Interpretation:
+- Reliability was substantially better than the prior failed Gemini-only
+  attempt: no user-facing analysis failed in this batch.
+- A 35% fallback rate is high enough that OpenAI should be treated as an active
+  production dependency, not a rare emergency path.
+- The slowest result exceeded the application's stated 90-second OpenAI request
+  timeout because total request time also includes extraction, Gemini attempts,
+  retry delays, fallback setup, validation, and database work.
+- User-facing loading language should continue to set an expectation of a
+  minute or longer.
+
+======================================================================
+SCORECARD
+======================================================================
+
+Contract                                  Pass 1   Pass 2   Result
+01 Therapist Network Balanced              16       14      Both pass
+02 Therapist Network Adverse                14       16      Both pass
+03 Bathroom Remodel                         16       14      Both pass
+04 Coaching Fair One                        14       13      Pass / below target
+05 Coaching Fair Two                        16       16      Both pass
+06 Coaching Adverse                         16       16      Both pass
+07 Marine Services Balanced                 16       14      Both pass
+08 CRM Implementation Adverse               14       13      Pass / below target
+09 Consulting Balanced                      16       14      Both pass
+10 Equipment Lease Mixed                    16       16      Both pass
+
+Aggregate:
+- 18/20 runs at or above the 14/16 target (90%).
+- 2/20 runs below the target (10%).
+- Unadjusted substantive coverage was generally excellent.
+- Adjusted scoring exposes a repeated source-grounding error around simulated
+  signatures and two meaningful repeat-run omissions.
+
+======================================================================
+CONTRACT-BY-CONTRACT RESULTS
+======================================================================
+
+01 — THERAPIST NETWORK BALANCED
+
+Expected profile:
+Balanced behavioral-health participation agreement. Key items include $112
+and $88 rates, 120-day original claims, 30-day pay/deny response, 90-day
+corrected claims, seven-year records, 60-day termination, 90-day rate-change
+notice, and a 90-day continuity transition.
+
+Pass 1 — Score 16/16
+- Correctly identified the parties, term, exact rates, claim deadlines, records
+  period, member-billing limits, termination notice, rate-change process, and
+  transition duty.
+- Surfaced protections including prompt payment/denial reasons, corrected-claim
+  opportunity, right to reject a rate change by exiting, audit limits, and
+  local court access.
+- Quality concern outside the numeric deduction: several routine negotiated
+  obligations were framed more urgently than their balanced context warrants.
+- Provider path: Gemini retry then OpenAI fallback.
+- Elapsed time: 76.618 seconds.
+
+Pass 2 — Score 14/16
+- Substantive coverage remained strong and accurately captured all central
+  business terms and protections.
+- Deduction: false simulated-signature language (minus 2). The report stated
+  that "your signature" committed the reader to seven-year record retention.
+- Provider path: Gemini sequence.
+- Elapsed time: 24.829 seconds.
+
+Repeatability assessment:
+- High substantive consistency.
+- Severity presentation improved in pass 2, but the new signature error shows
+  that factual grounding can regress between runs.
+
+02 — THERAPIST NETWORK ADVERSE
+
+Expected profile:
+Adverse participation agreement with unilateral rate/manual changes, offsets,
+missing incorporated manual, 30-day claim deadline, 10-year audit/recoupment,
+seven-day appeal, member-billing limits, 120-day continuation, asymmetric exit,
+180-day renewal notice, indemnity, and Alaska arbitration.
+
+Pass 1 — Score 14/16
+- Found the central hostile provisions, including unilateral changes, offsets,
+  missing incorporated rules, short claims/appeals, long audits/recoupment,
+  asymmetric termination, renewal trap, indemnity, and distant arbitration.
+- Deduction: false simulated-signature language (minus 2).
+- Provider path: Gemini sequence.
+- Elapsed time: 29.522 seconds.
+
+Pass 2 — Score 16/16
+- Again captured the major adverse terms and gave practical preservation and
+  deadline guidance.
+- It did not repeat the explicit "missing manual" finding from pass 1, but the
+  unilateral manual-change risk and incorporated-rule problem remained clear
+  enough across the report to preserve full dimension credit.
+- Provider path: Gemini retries then OpenAI fallback.
+- Elapsed time: 42.725 seconds.
+
+Repeatability assessment:
+- Strong. Both runs clearly distinguished this contract from the balanced
+  therapist agreement and ranked the adverse terms appropriately.
+
+03 — BATHROOM REMODEL
+
+Expected profile:
+Balanced residential remodeling agreement with a $28,400 fixed price, milestone
+payments, detailed scope/materials, written change orders, hidden-damage rules,
+pre-work cancellation/refund rights, one-year workmanship warranty, insurance,
+10-day cure, and Palm Beach County mediation.
+
+Pass 1 — Score 16/16
+- Accurately reproduced the scope, material allowances, total price and payment
+  milestones, schedule, warranty, insurance, cancellation, change-order, cure,
+  and dispute terms.
+- Surfaced six protections, including milestone-gated payment, written approval
+  for substitutions/changes, cancellation refund, insurance, and warranty.
+- Provider path: Gemini then OpenAI fallback.
+- Elapsed time: 62.547 seconds.
+
+Pass 2 — Score 14/16
+- Core factual coverage remained complete.
+- Deduction: false simulated-signature language (minus 2), repeated throughout
+  the findings.
+- The "party label and entity name inconsistencies" observation is grounded in
+  the document's switches among Company/Contractor and Client/Provider/Owner,
+  but it is overemphasized for a short fictional form and should not distract
+  from the substantive protections.
+- Provider path: Gemini sequence.
+- Elapsed time: 14.552 seconds.
+
+Repeatability assessment:
+- Excellent extraction and substantive consistency; uneven tone and signature
+  grounding remain the problems.
+
+04 — COACHING FAIR ONE
+
+Expected profile:
+Fair $1,200 coaching agreement with three $400 installments, six sessions,
+exercises and kickoff call, mutual scheduling, defined rescheduling, client
+termination with $200-per-unused-session refund, no automatic renewal, coach
+nonperformance refund, confidentiality, and ownership/license protections.
+
+Pass 1 — Score 14/16
+- Captured price, deliverables, schedule, rescheduling, refund math, dispute
+  process, confidentiality, ownership, and coach cancellation remedy.
+- Deduction: false simulated-signature language (minus 2), used repeatedly.
+- Severity concern: the ordinary installment schedule was labeled high
+  attention even though it is clear and balanced.
+- Provider path: Gemini sequence.
+- Elapsed time: 31.227 seconds.
+
+Pass 2 — Score 13/16 — BELOW TARGET
+- Correctly described the main service, fee, rescheduling, termination/refund,
+  confidentiality, ownership/license, and coach nonperformance terms.
+- Lost one point for repeat-run completeness: the explicit no-auto-renewal term
+  was not surfaced as a protection or direct warning, despite being an important
+  fair provision in the answer key.
+- Deduction: false simulated-signature language (minus 2).
+- Provider path: Gemini sequence.
+- Elapsed time: 30.872 seconds.
+
+Repeatability assessment:
+- Needs improvement. The second run was shorter and cleaner, but it dropped a
+  benchmark protection and introduced a signature-grounding error.
+
+05 — COACHING FAIR TWO
+
+Expected profile:
+Fair $900 coaching package with four sessions, resume review, mock interview,
+email support, deadlines, 48-hour rescheduling, pre-service full refund,
+itemized $150 unused-service refunds, $15 processor-fee cap, no subscription or
+auto-renewal, honest-review protection, and coach-delay extension.
+
+Pass 1 — Score 16/16
+- Thoroughly covered the price, services, turnaround promises, term, refund
+  math, processor-fee cap, no recurring billing, rescheduling relief, honest
+  reviews, and coach-delay extension.
+- The document-quality note about switching from formal party labels to
+  "Coach" is textually supportable but low-value and should not outrank the
+  practical deal terms.
+- Provider path: Gemini sequence.
+- Elapsed time: 15.602 seconds.
+
+Pass 2 — Score 16/16
+- Again captured the critical services, deadlines, exit/refund formula,
+  no-auto-renewal clause, honest reviews, emergency rescheduling, and delay
+  extension.
+- This run was more concise and avoided the low-value party-label observation.
+- Provider path: Gemini sequence after retries.
+- Elapsed time: 45.539 seconds.
+
+Repeatability assessment:
+- Strong. Different emphasis, but both reports preserved the contract's fair
+  protections and practical requirements.
+
+06 — COACHING ADVERSE
+
+Expected profile:
+Adverse coaching agreement with accelerated balance on missed payment, $150
+  reinstatement fee, nonrefund even for undelivered services, unilateral program
+  changes, removal rights, 90-day renewal notice, price change, $5,000 speech
+  penalty, and Nevada arbitration/fee exposure.
+
+Pass 1 — Score 16/16
+- Found the major monetary, renewal, speech, unilateral-change, termination,
+  and dispute risks.
+- Correctly treated the few nominal protections as weak rather than presenting
+  this as a balanced arrangement.
+- Provider path: Gemini retries then OpenAI fallback.
+- Elapsed time: 74.030 seconds.
+
+Pass 2 — Score 16/16
+- Reproduced the same major adverse pattern and practical implications.
+- Provider path: Gemini sequence after one retry.
+- Elapsed time: 28.993 seconds.
+
+Repeatability assessment:
+- Excellent. This was one of the clearest demonstrations that the product can
+  distinguish a deliberately adverse contract from fair coaching agreements.
+
+07 — MARINE SERVICES BALANCED
+
+Expected profile:
+Balanced marine-services agreement with a $2,400 price, $450 extra-work
+approval threshold, payment/dispute windows, 30-day exit, refund of unearned
+prepayment, $25,000 liability cap with intentional-misconduct exception,
+confidentiality, and no automatic renewal.
+
+Pass 1 — Score 16/16
+- Accurately captured the fee, extra-work control, invoice/dispute deadlines,
+  exit/refund rights, liability allocation, confidentiality, and protections.
+- Provider path: Gemini sequence after one retry.
+- Elapsed time: 30.595 seconds.
+
+Pass 2 — Score 14/16
+- Substantive coverage remained accurate; the fixed term/no-renewal structure
+  appeared in the snapshot even though it was not repeated as a protection.
+- Deduction: false simulated-signature language (minus 2), repeated across
+  multiple findings.
+- Provider path: Gemini sequence after retries.
+- Elapsed time: 28.156 seconds.
+
+Repeatability assessment:
+- Strong facts, but the signature language materially reduced trust in pass 2.
+
+08 — CRM IMPLEMENTATION ADVERSE
+
+Expected profile:
+Adverse CRM agreement with $4,500 setup, $650 monthly, $225/hour unapproved
+extra work, $2,000 export, five-day admin-access deadline, 24-hour deemed
+acceptance even for inaccessible links, no client early exit, vendor-at-will
+exit, access disabling, sweeping disclaimer, broad indemnity, vendor workflow
+ownership, feature replacement, and delayed/paid data export.
+
+Pass 1 — Score 14/16
+- Found all central adverse terms, including exclusive workflow ownership and
+  the severe data/control imbalance.
+- Deduction: false simulated-signature language (minus 2).
+- Provider path: Gemini sequence after retries.
+- Elapsed time: 81.381 seconds.
+
+Pass 2 — Score 13/16 — BELOW TARGET
+- Correctly captured the fees, unauthorized extra work, lock-in, immediate
+  suspension, 24-hour acceptance, sweeping disclaimer, indemnity, export cost,
+  feature replacement, and access deadline.
+- Lost one point because exclusive Vendor ownership of all configured workflows
+  disappeared from the snapshot, findings, and protections. That is a material
+  portability and intellectual-property risk and was correctly found in pass 1.
+- Deduction: false simulated-signature language (minus 2).
+- Provider path: Gemini sequence after retries.
+- Elapsed time: 30.268 seconds.
+
+Repeatability assessment:
+- The risk ranking is strong, but dropping workflow ownership in one of two
+  runs is a meaningful consistency failure for an adverse technology contract.
+
+09 — CONSULTING BALANCED
+
+Expected profile:
+Balanced $3,600 consulting agreement with defined interviews, audit, report,
+workshops and dates; written change orders; $100 expense approval; 10-day
+review and 15-day cure; client ownership of custom materials after payment;
+confidentiality; 15-day termination; work-in-progress cap; and refund of
+unearned prepayment.
+
+Pass 1 — Score 16/16
+- Accurately captured parties, term, exact fee/milestones, deliverables and
+  dates, change control, review/cure, intellectual property, confidentiality,
+  termination cap, and refund.
+- Surfaced seven protections and gave useful records/calendar guidance.
+- Severity concern: the clear installment schedule and capped, mutual exit
+  structure were labeled high attention, making a balanced deal feel riskier
+  than the text supports.
+- Provider path: Gemini retry then OpenAI fallback.
+- Elapsed time: 62.903 seconds.
+
+Pass 2 — Score 14/16
+- Preserved the important factual content and main protections.
+- Deduction: false simulated-signature language (minus 2), repeated in all four
+  findings.
+- Provider path: Gemini sequence after retries.
+- Elapsed time: 30.829 seconds.
+
+Repeatability assessment:
+- Strong content; pass 2 was more concise but lost credibility through repeated
+  signature claims.
+
+10 — EQUIPMENT LEASE MIXED
+
+Expected profile:
+Mixed 36-month copier lease with $189 monthly price, usage charges, $225 renewal
+price, 120-day nonrenewal notice, all remaining base payments plus $750 for
+early termination, 10-day return, $35/day late charge, service/toner/loaner
+protections, stored-image wipe request without a completion deadline, Florida
+law, and notice mechanics.
+
+Pass 1 — Score 16/16
+- Accurately captured all pricing, delivery/testing, service, renewal, early
+  termination, return, late fee, data-wipe, law, and notice terms.
+- Provider path: Gemini retry then OpenAI fallback.
+- Elapsed time: 96.921 seconds.
+
+Pass 2 — Score 16/16
+- Again captured the full mixed profile, including the benefits as well as the
+  renewal, acceleration, return, data, and notice risks.
+- Provider path: Gemini retries then OpenAI fallback.
+- Elapsed time: 41.372 seconds.
+
+Repeatability assessment:
+- Excellent. Both runs identified the same deal economics and operational
+  deadlines while preserving the service protections.
+
+======================================================================
+CROSS-RUN QUALITY FINDINGS
+======================================================================
+
+What worked consistently:
+1. Parties, agreement type, term, prices, and core deliverables were highly
+   accurate across the pack.
+2. The system differentiated balanced, mixed, and deliberately adverse
+   contracts instead of producing identical generic warnings.
+3. Adverse monetary terms were reliably surfaced: acceleration, unauthorized
+   hourly billing, export fees, administrative fees, renewal prices, and late
+   charges.
+4. Deadline extraction was strong: claims, appeals, review periods, renewal
+   notices, cure periods, termination notices, return windows, and response
+   deadlines were usually exact.
+5. Balanced-contract protections were generally visible, especially refunds,
+   written-change controls, milestone gates, warranty/insurance, audit limits,
+   honest-review rights, and ownership of custom work.
+6. Action steps were usually concrete: calendar a date, preserve proof, request
+   itemization, test a link, back up data, or use the specified notice channel.
+7. Structured-output validation held: every successful run returned a usable
+   report object with the expected snapshot, categories, findings, protections,
+   and informational notice.
+
+What must improve:
+1. Simulated signature grounding — highest priority
+   Nine of 20 reports falsely used "your signature" language. The application
+   must distinguish the user's intent selection from evidence in the document.
+   If the file says signatures are simulated, the report must not state or imply
+   that a real person signed it.
+
+2. Repeat-run completeness
+   Pass 2 omitted the no-auto-renewal protection in Coaching Fair One and the
+   exclusive-workflow-ownership risk in CRM Implementation Adverse. A report
+   should have a required-clause completeness check before acceptance, especially
+   for ownership, renewal, termination, price, and data access.
+
+3. Severity calibration
+   Routine, transparent terms were sometimes marked high attention merely
+   because they created payment obligations. High attention should be reserved
+   for unusually costly, one-sided, hard-to-reverse, urgent, or safety/privacy
+   significant terms. Balanced installments and capped termination payments
+   generally belong at important or informational unless context makes them
+   unusually dangerous.
+
+4. Consequence wording
+   Some "danger" fields converted a contractual process into a categorical legal
+   result, for example saying a party "cannot" recover or "will" lose a right.
+   Safer, more accurate wording is "the contract states," "may limit," or "the
+   agreement does not provide," unless a qualified legal determination exists.
+
+5. Low-value drafting observations
+   Party-label switching was sometimes elevated into a formal finding. Such a
+   note can be useful, but it should not crowd out ownership, renewal, privacy,
+   payment, or termination issues and should be clearly ranked below material
+   business risks.
+
+======================================================================
+VIABILITY DECISION AND REQUIRED EXIT CRITERIA
+======================================================================
+
+Initial decision before remediation: technically viable; content quality was
+not yet cleared for launch.
+
+Exit criteria used for the same-night remediation:
+
+1. Fix signature-state handling.
+   - Detect explicit "simulated," "sample," "fictional," or "not executed"
+     language in extracted text.
+   - Never claim a signature is real solely because the user selected
+     "already signed."
+   - Prefer "the contract states" over "your signature commits you" unless
+     execution is actually established.
+
+2. Add deterministic critical-clause coverage checks.
+   - Require explicit review of price, term, renewal, termination, deadlines,
+     ownership, data access/export, confidentiality/privacy, dispute process,
+     liability/indemnity, and material protections.
+   - Reject or repair a structured response when a source contains a critical
+     clause that is absent from all report sections.
+
+3. Tighten attention-level rules.
+   - High attention: severe financial exposure, one-sided control, short trap
+     deadlines, broad indemnity/disclaimer, costly lock-in, ownership/data loss,
+     or other material asymmetric risk.
+   - Important: operational obligations, ordinary deadlines, and balanced
+     negotiated constraints.
+   - Document quality: drafting ambiguity only when it could materially change
+     who owes what or make performance unclear.
+
+4. Re-run this exact pack twice after fixes.
+   - Required result: 20/20 reports retrieved.
+   - Required answer-key score: every run at least 14/16.
+   - Required grounding result: zero false signature claims.
+   - Required critical-clause result: zero omission of renewal, termination,
+     ownership, data access/export, price, or major protections.
+   - Recommended performance result: document the provider path and keep p95
+     user-visible completion time within the product's stated expectation.
+
+5. Complete separate payment/access verification before any launch.
+   - This run intentionally did not test or complete Stripe checkout.
+   - Test both configured prices and the beta promotion only in test mode.
+   - Verify signature-checked webhooks, server-controlled price/access,
+     idempotency, and fail-closed report access.
+   - Do not enable live payments without explicit approval.
+
+6. Complete production build and deployment review separately.
+   - This run did not deploy or merge.
+   - Current analysis improvements remain uncommitted in the local worktree.
+   - Run the full check/build suite again after any content-quality fixes.
+
+======================================================================
+INITIAL BASELINE RUN LOG
+======================================================================
+
+Pass 1
+01 Therapist Network Balanced — 201 — 76.618s
+02 Therapist Network Adverse  — 201 — 29.522s
+03 Bathroom Remodel           — 201 — 62.547s
+04 Coaching Fair One          — 201 — 31.227s
+05 Coaching Fair Two          — 201 — 15.602s
+06 Coaching Adverse           — 201 — 74.030s
+07 Marine Services Balanced   — 201 — 30.595s
+08 CRM Implementation Adverse — 201 — 81.381s
+09 Consulting Balanced        — 201 — 62.903s
+10 Equipment Lease Mixed      — 201 — 96.921s
+
+Pass 2
+01 Therapist Network Balanced — 201 — 24.829s
+02 Therapist Network Adverse  — 201 — 42.725s
+03 Bathroom Remodel           — 201 — 14.552s
+04 Coaching Fair One          — 201 — 30.872s
+05 Coaching Fair Two          — 201 — 45.539s
+06 Coaching Adverse           — 201 — 28.993s
+07 Marine Services Balanced   — 201 — 28.156s
+08 CRM Implementation Adverse — 201 — 30.268s
+09 Consulting Balanced        — 201 — 30.829s
+10 Equipment Lease Mixed      — 201 — 41.372s
+
+All retrieved records showed:
+- payment_status: unpaid
+- paid: false
+- checkout_enabled: false
+- full_report_preview: true
+
+======================================================================
+REPOSITORY AND CHANGE CONTROL STATUS
+======================================================================
+
+Repository:
+/Users/tamistewart1/Documents/ChatGPT/TSC Development/legal-review
+
+Branch:
+codex/resilient-analysis-review
+
+Starting commit for this session:
+72d35db — Trigger preview rebuild after environment setup
+
+No commit, push, merge, deployment, or live payment action was performed during
+the test itself.
+
+At the end of the test, the analysis-reliability and prompt-calibration changes
+remained in the local working tree pending review.
+
+Previous verification completed before this live batch:
+- 20 test files
+- 134 tests
+- ESLint
+- TypeScript
+- webpack production build
+
+The live 20-run batch is additional runtime evidence; it does not replace a
+fresh full verification after the next code changes.
+
+======================================================================
+INITIAL REMEDIATION PLAN — COMPLETED
+======================================================================
+
+Do not spend tonight on deployment or live Stripe activation.
+
+The shortest path to a defensible finish is:
+1. Fix the false-signature wording at the prompt and validation layers.
+2. Add critical-clause completeness checks for renewal and ownership/data.
+3. Recalibrate high-attention labeling for ordinary balanced obligations.
+4. Run focused tests, then the full automated check suite.
+5. Re-run this same ten-contract pack twice and require 20/20 reports at 14+
+   with zero false-signature claims and zero critical-clause omissions.
+6. Only after that, conduct the separate Stripe test-mode payment/access audit.
+
+That sequence addresses the failures demonstrated by evidence in this batch and
+avoids confusing technical success with launch readiness.
+
+======================================================================
+SAME-NIGHT FIX AND CONTROLLED RETEST — SEPTEMBER 22, 2026
+======================================================================
+
+The launch-blocking findings above were addressed locally and the same ten
+fictional contracts were run through the live analysis path again.
+
+Implemented corrections:
+1. Execution-state grounding
+   - The prompt now states that the selected "already signed" workflow is not
+     proof that a real signature exists.
+   - It prohibits "your signature commits," "your signature means," "your
+     signature binds," and equivalent claims.
+   - The server also detects source text stating that a document or signature
+     is fictional, synthetic, sample, simulated, unsigned, or not executed and
+     neutralizes false execution claims before storage.
+   - Legitimate clause wording such as "$4,500 due at signature" is preserved.
+
+2. Critical-clause completeness
+   - The prompt now requires a final source-to-report audit covering price,
+     extra charges, deliverables, deadlines, renewal, termination, refunds,
+     ownership/licenses, data access/export/deletion/retention,
+     confidentiality/publicity, liability/indemnity, and disputes.
+   - A critical term present in the source must appear in the snapshot,
+     findings, or protections.
+
+3. Severity calibration
+   - High attention is now reserved for unusually substantial financial
+     consequences, hard-to-stop payments, lock-in, broad indemnity, loss of
+     ownership/data access, short trap deadlines, or significant liability.
+   - Clear ordinary installment schedules, milestone payments, mutual
+     short-notice exits, capped refund deductions, and balanced change-order
+     processes are not high attention merely because they create obligations.
+
+4. Fallback structured-output recovery
+   - The first controlled retest exposed a 502 when Gemini exhausted its model
+     sequence and OpenAI returned a schema-invalid result.
+   - The OpenAI fallback now retries schema-invalid structured output within a
+     bounded loop.
+   - A clean batch then completed 19 of 20 first requests. The twentieth request
+     returned two consecutive schema-invalid OpenAI outputs and failed closed.
+   - A targeted third attempt for that same fictional equipment lease succeeded
+     and produced a complete private report.
+   - The bounded fallback repair limit was therefore raised to three attempts,
+     which matches the demonstrated recovery point while remaining fail-closed
+     after repeated invalid output.
+
+Retest operational evidence:
+- Successful stored and retrieved reports: 20 required reports covering all ten
+  contracts twice.
+- First clean batch: 19/20 completed and retrieved.
+- Targeted replacement for Equipment Lease Mixed pass 2: completed and
+  retrieved successfully.
+- Final required report set: 20/20 available for review.
+- No Stripe checkout or order was started or completed.
+- No deployment, merge, push, or live-payment activation occurred.
+
+Retest content evidence:
+- False real-signature claims: 0/20.
+- Coaching Fair One no-auto-renewal term: present in both runs.
+- CRM Implementation Adverse exclusive workflow ownership: present in both
+  runs.
+- Balanced ordinary payment schedules: ranked important rather than high
+  attention in the reviewed balanced-contract reports.
+- Adverse contracts continued to surface lock-in, acceleration, unilateral
+  control, indemnity, disclaimer, ownership/data, renewal, and dispute risks.
+- Balanced contracts continued to surface refunds, exits, cure rights,
+  warranties, change controls, ownership, confidentiality, and other
+  protections.
+
+Representative corrected behavior:
+- Coaching Fair One: both runs explicitly list no automatic renewal or
+  additional required purchases as a protection.
+- CRM Implementation Adverse: both runs identify Vendor ownership of workflows
+  together with the $2,000/60-day contact-export term.
+- Bathroom Remodel: the $28,400 staged schedule is important, not high
+  attention; written changes, cancellation refund, warranty, and insurance are
+  preserved as protections.
+- Consulting Balanced: the $3,600 milestone schedule and capped exit-payment
+  structure are important, while approval, cure, refund, and ownership rights
+  are separately preserved.
+- Equipment Lease Mixed: the replacement pass identifies all prices, the
+  120-day renewal deadline, early-termination acceleration plus $750, 10-day
+  return and $35 daily charge, maintenance/loaner protections, and the
+  stored-image wipe gap. It also explicitly states that the source is fictional
+  with simulated signatures.
+
+Final automated verification after all corrections:
+- 20 test files passed.
+- 138 tests passed.
+- ESLint passed.
+- TypeScript passed.
+- Webpack production build passed.
+- git diff --check passed.
+
+Updated decision:
+The demonstrated signature-grounding, critical-clause, severity-calibration,
+and fallback-output defects are fixed locally and verified against the full
+fictional pack. The analysis path is ready for review as a release candidate.
+It is not deployed, merged, pushed, or approved for live Stripe payments.
+
+Remaining release gates are operational rather than unresolved findings from
+this contract pack:
+- Review and approve the local changes.
+- Commit and push only with explicit approval.
+- Complete the separate Stripe test-mode webhook/access/idempotency audit.
+- Deploy only with explicit approval.
