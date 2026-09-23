@@ -320,6 +320,11 @@ export async function POST(request: Request): Promise<Response> {
           );
         },
         {
+          // Preserve the serverless execution window for the independent
+          // provider fallback instead of exhausting it on same-provider
+          // retries. Deployments without OpenAI configured still try each
+          // Gemini candidate before returning an availability error.
+          maxAttempts: environment.OPENAI_API_KEY ? 1 : geminiModels.length,
           onRetry: ({ attempt, delayMs, status }) => {
             logServerFailure({
               level: "warn",
