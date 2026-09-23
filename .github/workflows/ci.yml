@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   verify:
@@ -30,6 +31,23 @@ jobs:
         with:
           version: 2.109.0
           github-token: ${{ github.token }}
-      - run: supabase db start
+      - name: Authenticate container pulls
+        run: echo "${{ github.token }}" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+      - name: Start local database
+        run: |
+          for attempt in 1 2 3; do
+            if supabase db start; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Supabase failed to start after $attempt attempts."
+              exit 1
+            fi
+
+            echo "Supabase start attempt $attempt failed; retrying in $((attempt * 20)) seconds."
+            supabase stop --no-backup || true
+            sleep "$((attempt * 20))"
+          done
       - run: supabase test db --local
       - run: supabase db advisors --local
