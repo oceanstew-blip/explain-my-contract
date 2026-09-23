@@ -10,6 +10,7 @@ import {
 import {
   getAnalysisEnvironment,
   getCheckoutEnvironment,
+  getReportEmailEnvironment,
   getStripeWebhookEnvironment,
 } from "@/lib/server-env";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
@@ -46,6 +47,7 @@ export async function GET(request: Request): Promise<Response> {
     if (paymentsEnabled) {
       getCheckoutEnvironment();
       getStripeWebhookEnvironment();
+      getReportEmailEnvironment();
     }
 
     const supabase = createSupabaseAdmin(
@@ -60,6 +62,8 @@ export async function GET(request: Request): Promise<Response> {
         status: "ready",
         dependencies: { database: "ok" },
         payments: paymentsEnabled ? "enabled" : "disabled",
+        report_email:
+          process.env.REPORT_EMAIL_ENABLED === "true" ? "enabled" : "disabled",
       },
       { headers: { "Cache-Control": "no-store" } },
     );

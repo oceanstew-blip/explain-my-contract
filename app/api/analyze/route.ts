@@ -13,6 +13,7 @@ import {
 } from "@/lib/analysis-config";
 import { hasAcknowledgedAnalysisDisclaimer } from "@/lib/analysis-disclaimer";
 import { analysisIntentSchema } from "@/lib/analysis-intent";
+import { contractTypeSchema } from "@/lib/contract-type";
 import { reviewPerspectiveSchema } from "@/lib/review-perspective";
 import {
   AnalysisRateLimitUnavailableError,
@@ -130,6 +131,17 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const intent = intentResult.data;
+    const contractTypeResult = contractTypeSchema.safeParse(
+      formData.get("contract_type"),
+    );
+    if (!contractTypeResult.success) {
+      return errorResponse(
+        requestId,
+        "Choose the kind of contract you want reviewed.",
+        400,
+      );
+    }
+    const contractType = contractTypeResult.data;
     const perspectiveResult = reviewPerspectiveSchema.safeParse(
       formData.get("review_perspective"),
     );
@@ -270,7 +282,11 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    const analysisConfig = getAnalysisConfig(intent, reviewPerspective);
+    const analysisConfig = getAnalysisConfig(
+      intent,
+      reviewPerspective,
+      contractType,
+    );
 
     const gemini = new GoogleGenAI({
       apiKey: environment.GEMINI_API_KEY,

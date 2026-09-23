@@ -83,3 +83,14 @@ export function getStripeWebhookEnvironment() {
     SUPABASE_SECRET_KEY: nonEmptyString,
   });
 }
+
+export function getReportEmailEnvironment() {
+  if (process.env.REPORT_EMAIL_ENABLED !== "true") return null;
+
+  return readEnvironment({
+    REPORT_EMAIL_ENABLED: z.literal("true"),
+    RESEND_API_KEY: nonEmptyString.startsWith("re_"),
+    REPORT_EMAIL_FROM: nonEmptyString,
+    REPORT_EMAIL_REPLY_TO: z.email(),
+  });
+}

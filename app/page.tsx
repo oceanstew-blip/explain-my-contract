@@ -8,6 +8,11 @@ import Script from "next/script";
 import { apiErrorMessage } from "@/lib/api-error";
 import { ANALYSIS_DISCLAIMER_TEXT } from "@/lib/analysis-disclaimer";
 import type { AnalysisIntent } from "@/lib/analysis-intent";
+import {
+  CONTRACT_ROLE_OPTIONS,
+  CONTRACT_TYPE_LABELS,
+  type ContractType,
+} from "@/lib/contract-type";
 
 type SubmissionState =
   | { status: "idle" }
@@ -296,7 +301,9 @@ export default function Home() {
   const [turnstileReady, setTurnstileReady] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [selectedIntent, setSelectedIntent] = useState<AnalysisIntent>("considering_signing");
+  const [contractType, setContractType] = useState<ContractType | "">("");
   const [reviewPerspective, setReviewPerspective] = useState("");
+  const [customPerspective, setCustomPerspective] = useState("");
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState<ContractExample["id"]>("brand");
   const [demoRun, setDemoRun] = useState(0);
@@ -425,7 +432,9 @@ export default function Home() {
 
     setFile(selectedFile);
     setDisclaimerAcknowledged(false);
+    setContractType("");
     setReviewPerspective("");
+    setCustomPerspective("");
     setSubmission({ status: "idle" });
   }
 
@@ -442,7 +451,9 @@ export default function Home() {
   function resetFile() {
     setFile(null);
     setDisclaimerAcknowledged(false);
+    setContractType("");
     setReviewPerspective("");
+    setCustomPerspective("");
     setTurnstileToken("");
     setSubmission({ status: "idle" });
     if (inputRef.current) inputRef.current.value = "";
@@ -456,7 +467,13 @@ export default function Home() {
     const formData = new FormData();
     formData.set("file", file);
     formData.set("intent", intent);
-    formData.set("review_perspective", reviewPerspective.trim());
+    formData.set("contract_type", contractType);
+    formData.set(
+      "review_perspective",
+      reviewPerspective === "Other"
+        ? customPerspective.trim()
+        : reviewPerspective,
+    );
     formData.set(
       "disclaimer_acknowledged",
       disclaimerAcknowledged ? "true" : "false",
@@ -518,6 +535,10 @@ export default function Home() {
 
   const isSubmitting = submission.status === "submitting";
   const isAlreadySigned = selectedIntent === "already_signed";
+  const finalPerspective = reviewPerspective === "Other"
+    ? customPerspective.trim()
+    : reviewPerspective;
+  const roleOptions = contractType ? CONTRACT_ROLE_OPTIONS[contractType] : [];
   const selectedContract = CONTRACT_EXAMPLES.find((contract) => contract.id === selectedContractId) ?? CONTRACT_EXAMPLES[0];
 
   return (
@@ -825,19 +846,66 @@ export default function Home() {
               </p>
 
               <label className="mt-6 w-full text-left text-sm font-bold text-brand-indigo">
-                Which party are you—or would you be—under this agreement?
+                1. What kind of contract is this?
                 <span className="mt-2 block text-xs font-normal leading-5 text-brand-muted">
-                  Use the name or role written in the document, such as “Morgan Vale Studio LLC,” “Agency,” “Client,” or “Tenant.” You do not need to have signed it.
+                  This changes the checklist used to review your document.
                 </span>
-                <input
+                <select
                   className="mt-3 w-full rounded-xl border border-brand-border bg-white px-4 py-3 text-sm font-normal text-brand-ink outline-none focus:border-brand-action focus:ring-2 focus:ring-brand-action/20"
-                  maxLength={120}
-                  placeholder="Your current or prospective party name or role"
-                  type="text"
-                  value={reviewPerspective}
-                  onChange={(event) => setReviewPerspective(event.currentTarget.value)}
-                />
+                  value={contractType}
+                  onChange={(event) => {
+                    setContractType(event.currentTarget.value as ContractType | "");
+                    setReviewPerspective("");
+                    setCustomPerspective("");
+                  }}
+                >
+                  <option value="">Choose a contract type</option>
+                  {Object.entries(CONTRACT_TYPE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
               </label>
+
+              <label className="mt-6 w-full text-left text-sm font-bold text-brand-indigo">
+                2. Which side are you—or would you be—on?
+                <span className="mt-2 block text-xs font-normal leading-5 text-brand-muted">
+                  Choose the role whose money, responsibilities, deadlines, and options should be prioritized.
+                </span>
+                <select
+                  className="mt-3 w-full rounded-xl border border-brand-border bg-white px-4 py-3 text-sm font-normal text-brand-ink outline-none focus:border-brand-action focus:ring-2 focus:ring-brand-action/20 disabled:bg-brand-canvas-deep"
+                  disabled={!contractType}
+                  value={reviewPerspective}
+                  onChange={(event) => {
+                    setReviewPerspective(event.currentTarget.value);
+                    if (event.currentTarget.value !== "Other") setCustomPerspective("");
+                  }}
+                >
+                  <option value="">Choose your side</option>
+                  {roleOptions.map((role) => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </label>
+
+              {reviewPerspective === "Other" ? (
+                <label className="mt-4 w-full text-left text-sm font-bold text-brand-indigo">
+                  Name the role shown in the contract
+                  <input
+                    className="mt-2 w-full rounded-xl border border-brand-border bg-white px-4 py-3 text-sm font-normal text-brand-ink outline-none focus:border-brand-action focus:ring-2 focus:ring-brand-action/20"
+                    maxLength={120}
+                    placeholder="For example: Guarantor or Additional insured"
+                    type="text"
+                    value={customPerspective}
+                    onChange={(event) => setCustomPerspective(event.currentTarget.value)}
+                  />
+                </label>
+              ) : null}
+
+              {contractType === "insurance_policy" ? (
+                <p className="mt-4 w-full rounded-xl border border-brand-border bg-brand-canvas-deep px-4 py-3 text-left text-xs leading-5 text-brand-ink">
+                  Insurance review is in early beta. The report can organize limits, deductibles, exclusions, endorsements, and notice duties, but it cannot confirm whether a particular claim is covered.
+                </p>
+              ) : null}
 
               <label className="mt-6 flex w-full items-start gap-3 rounded-2xl border border-brand-border bg-white px-4 py-4 text-left text-sm leading-6 text-brand-ink">
                 <input
@@ -866,7 +934,7 @@ export default function Home() {
               <div className="mt-7 grid w-full gap-4 sm:grid-cols-2">
                 <button
                   className="rounded-2xl border-2 border-brand-action bg-white px-5 py-5 text-left font-bold text-brand-action transition hover:bg-brand-canvas-deep focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action disabled:cursor-not-allowed disabled:border-brand-border disabled:text-brand-muted disabled:opacity-60"
-                  disabled={!reviewPerspective.trim() || !disclaimerAcknowledged || !browserVerificationToken}
+                  disabled={!contractType || !finalPerspective || !disclaimerAcknowledged || !browserVerificationToken}
                   type="button"
                   onClick={() => processDocument("considering_signing")}
                 >
@@ -877,7 +945,7 @@ export default function Home() {
                 </button>
                 <button
                   className="rounded-2xl border-2 border-brand-action bg-brand-action px-5 py-5 text-left font-bold text-white shadow-lg shadow-brand-action/15 transition hover:border-brand-indigo hover:bg-brand-indigo focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action disabled:cursor-not-allowed disabled:border-brand-border disabled:bg-brand-muted disabled:opacity-60"
-                  disabled={!reviewPerspective.trim() || !disclaimerAcknowledged || !browserVerificationToken}
+                  disabled={!contractType || !finalPerspective || !disclaimerAcknowledged || !browserVerificationToken}
                   type="button"
                   onClick={() => processDocument("already_signed")}
                 >

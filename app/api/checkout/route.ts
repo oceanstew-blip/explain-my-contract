@@ -119,6 +119,7 @@ export async function POST(request: Request): Promise<Response> {
         allow_promotion_codes: true,
         phone_number_collection: { enabled: false },
         wallet_options: { link: { display: "never" } },
+        invoice_creation: { enabled: true },
         client_reference_id: contractId,
         line_items: [{ price: priceId, quantity: 1 }],
         metadata: { contract_id: contractId },

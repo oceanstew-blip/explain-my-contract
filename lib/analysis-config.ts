@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { AnalysisIntent } from "./analysis-intent";
+import { CONTRACT_TYPE_LABELS, type ContractType } from "./contract-type";
 
 export const INFORMATIONAL_NOTICE =
   "This is informational text, not legal advice on how to litigate.";
@@ -497,14 +498,52 @@ extra fields, a full-contract summary, or text outside the JSON object.
 export function getAnalysisConfig(
   intent: AnalysisIntent,
   reviewPerspective = "Perspective not provided",
+  contractType: ContractType = "other",
 ) {
   const config = intent === "already_signed"
     ? alreadySignedConfig
     : consideringSigningConfig;
 
+  const specialtyInstructions: Record<ContractType, string> = {
+    rental_lease: `
+The user selected Rental or lease. Perform a rental-specific completeness pass.
+Identify and accurately explain, when present: base rent; deposits; application,
+move-in, administrative, utility, amenity, late, returned-payment, repair, and
+move-out charges; rent increases; renewal and holdover; termination and early
+exit; notice deadlines and delivery methods; repairs and maintenance; entry and
+access; utilities; pets; occupants and guests; subletting; alterations; damage;
+liability; insurance; default and cure; attorney fees; dispute terms; community
+rules; inventories; and every referenced addendum. Separate landlord duties,
+tenant duties, and useful tenant protections. Do not announce that a provision
+is legal, illegal, enforceable, or unenforceable. If the answer depends on a
+state, city, rent-control program, or property type not established by the
+document, identify that dependency instead of guessing the governing rule.
+`.trim(),
+    brand_deal: `
+The user selected Brand deal. Pay particular attention to deliverables,
+acceptance and revisions, payment and expenses, content ownership and licenses,
+organic use versus paid advertising, whitelisting, exclusivity, term,
+termination, cancellation and kill fees, name-image-voice-likeness permissions,
+AI or digital-replica permissions, disclosure duties, analytics, morality
+clauses, indemnity, and liability. Describe only the rights stated in the text.
+`.trim(),
+    insurance_policy: `
+The user selected Insurance policy (early beta). Organize the document without
+deciding whether a real loss or claim is covered. Check the declarations,
+definitions, insuring agreement, limits, deductibles, sublimits, exclusions,
+conditions, endorsements, covered people or property, territory, cancellation,
+nonrenewal, claim and notice deadlines, and policyholder duties. Flag conflicts
+or missing referenced forms. Distinguish replacement cost from actual cash
+value only when the document does. Never promise coverage, denial, claim value,
+or an insurer outcome; identify the controlling language and questions for a
+licensed agent, broker, adjuster, or qualified attorney when consequential.
+`.trim(),
+    other: "Use the cross-contract completeness rules and do not assume a specialized agreement type.",
+  };
+
   return {
     ...config,
-    userInstruction: `${config.userInstruction}\nThe user identifies the party or prospective party whose perspective should be reviewed as: ${JSON.stringify(reviewPerspective)}. Analyze consequences and protections from that perspective. Do not silently switch sides or guess a different role. If the agreement is unsigned, describe this as the role the user would have if they sign; do not imply that the relationship already exists.`,
+    userInstruction: `${config.userInstruction}\nThe user selected this contract category: ${JSON.stringify(CONTRACT_TYPE_LABELS[contractType])}.\n${specialtyInstructions[contractType]}\nThe user identifies the party or prospective party whose perspective should be reviewed as: ${JSON.stringify(reviewPerspective)}. Analyze consequences and protections from that perspective. Do not silently switch sides or guess a different role. If the agreement is unsigned, describe this as the role the user would have if they sign; do not imply that the relationship already exists.`,
   };
 }
 

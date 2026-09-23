@@ -169,6 +169,36 @@ describe("getAnalysisConfig", () => {
     expect(instruction).toMatch(/would have if they sign/i);
     expect(instruction).toMatch(/do not imply that the relationship already exists/i);
   });
+
+  it("adds a rental-specific completeness pass when rental is selected", () => {
+    const instruction = getAnalysisConfig(
+      "considering_signing",
+      "Tenant",
+      "rental_lease",
+    ).userInstruction;
+
+    expect(instruction).toMatch(/Rental or lease/i);
+    expect(instruction).toMatch(/base rent/i);
+    expect(instruction).toMatch(/deposits/i);
+    expect(instruction).toMatch(/renewal and holdover/i);
+    expect(instruction).toMatch(/repairs and maintenance/i);
+    expect(instruction).toMatch(/referenced addendum/i);
+    expect(instruction).toMatch(/state, city, rent-control program/i);
+  });
+
+  it("keeps insurance in an issue-spotting lane without deciding coverage", () => {
+    const instruction = getAnalysisConfig(
+      "already_signed",
+      "Policyholder",
+      "insurance_policy",
+    ).userInstruction;
+
+    expect(instruction).toMatch(/Insurance policy \(early beta\)/i);
+    expect(instruction).toMatch(/declarations/i);
+    expect(instruction).toMatch(/limits, deductibles, sublimits, exclusions/i);
+    expect(instruction).toMatch(/Never promise coverage, denial/i);
+    expect(instruction).toMatch(/licensed agent, broker, adjuster/i);
+  });
 });
 
 describe("validateAnalysisResult", () => {
