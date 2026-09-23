@@ -4,12 +4,15 @@ export const TURNSTILE_ALWAYS_PASS_SECRET =
 
 export function assertSafeAnalysisSecurityConfig(config: {
   nodeEnv: string | undefined;
+  deployContext?: string;
   siteKey: string;
   secret: string;
   testMode: boolean;
   hostnames: string;
 }): void {
   if (config.nodeEnv !== "production") return;
+
+  if (config.deployContext === "deploy-preview") return;
 
   const hostnames = config.hostnames
     .split(",")

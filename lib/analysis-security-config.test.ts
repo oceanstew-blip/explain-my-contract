@@ -42,4 +42,28 @@ describe("analysis security configuration", () => {
       }),
     ).not.toThrow();
   });
+
+  it("allows Cloudflare test configuration only in a Netlify deploy preview", () => {
+    expect(() =>
+      assertSafeAnalysisSecurityConfig({
+        nodeEnv: "production",
+        deployContext: "deploy-preview",
+        siteKey: TURNSTILE_ALWAYS_PASS_SITE_KEY,
+        secret: TURNSTILE_ALWAYS_PASS_SECRET,
+        testMode: true,
+        hostnames: "deploy-preview-2--contracts.example.com",
+      }),
+    ).not.toThrow();
+
+    expect(() =>
+      assertSafeAnalysisSecurityConfig({
+        nodeEnv: "production",
+        deployContext: "production",
+        siteKey: TURNSTILE_ALWAYS_PASS_SITE_KEY,
+        secret: TURNSTILE_ALWAYS_PASS_SECRET,
+        testMode: true,
+        hostnames: "contracts.example.com",
+      }),
+    ).toThrow(/forbidden in production/);
+  });
 });
