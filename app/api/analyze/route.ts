@@ -301,7 +301,9 @@ export async function POST(request: Request): Promise<Response> {
             config: {
               abortSignal: request.signal,
               httpOptions: {
-                timeout: environment.GEMINI_REQUEST_TIMEOUT_MS,
+                timeout: environment.OPENAI_API_KEY
+                  ? Math.min(environment.GEMINI_REQUEST_TIMEOUT_MS, 1_000)
+                  : environment.GEMINI_REQUEST_TIMEOUT_MS,
               },
               systemInstruction: analysisConfig.systemPrompt,
               temperature: 0,
