@@ -34,6 +34,10 @@ jobs:
       - name: Authenticate container pulls
         run: echo "${{ github.token }}" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
       - name: Start local database
+        env:
+          # GitHub-hosted runners are currently exhausting GHCR's shared pull
+          # quota; the CLI supports Docker Hub as an alternate registry.
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
         run: |
           for attempt in 1 2 3; do
             if supabase start -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor; then
