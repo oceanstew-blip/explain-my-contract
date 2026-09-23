@@ -71,6 +71,7 @@ export function getCheckoutEnvironment() {
 export function getReportEnvironment() {
   return readEnvironment({
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
+    REPORT_LINK_TOKEN_SECRET: nonEmptyString.min(32).optional(),
     SUPABASE_SECRET_KEY: nonEmptyString,
   });
 }
@@ -92,5 +93,7 @@ export function getReportEmailEnvironment() {
     RESEND_API_KEY: nonEmptyString.startsWith("re_"),
     REPORT_EMAIL_FROM: nonEmptyString,
     REPORT_EMAIL_REPLY_TO: z.email(),
+    REPORT_LINK_TOKEN_SECRET: nonEmptyString.min(32),
+    APP_BASE_URL: z.url(),
   });
 }

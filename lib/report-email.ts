@@ -13,6 +13,7 @@ export type ReportEmailContent = {
   agreementType: string;
   expiresAt: string;
   findings: ReportFinding[];
+  reportUrl: string;
 };
 
 function escapeHtml(value: string): string {
@@ -55,7 +56,8 @@ export function renderReportReadyEmail(content: ReportEmailContent) {
       "A few items from your report:",
       textFindings,
       "",
-      `Your private report is available in the browser where you completed checkout until ${expires}.`,
+      `Your private report is available until ${expires}:`,
+      content.reportUrl,
       "",
       "For privacy, your uploaded contract and complete report are not attached to this email.",
       "This is educational information, not legal advice.",
@@ -67,7 +69,8 @@ export function renderReportReadyEmail(content: ReportEmailContent) {
         <h2 style="font-size:20px">${escapeHtml(content.agreementType)}</h2>
         <p><strong>A few items from your report:</strong></p>
         ${htmlFindings}
-        <p>Your private report is available in the browser where you completed checkout until <strong>${escapeHtml(expires)}</strong>.</p>
+        <p>Your private report is available until <strong>${escapeHtml(expires)}</strong>.</p>
+        <p><a href="${escapeHtml(content.reportUrl)}" style="display:inline-block;background:#1457ff;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:999px">Open my private report</a></p>
         <p style="background:#f1f7ff;padding:16px;border-radius:12px">For privacy, your uploaded contract and complete report are not attached to this email.</p>
         <p style="font-size:13px;color:#5d6475">This is educational information, not legal advice.</p>
       </div>

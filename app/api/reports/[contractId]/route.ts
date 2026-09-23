@@ -19,6 +19,7 @@ import {
 } from "@/lib/report-deletion";
 import { createReportDelivery } from "@/lib/report-delivery";
 import { isReportExpired } from "@/lib/report-retention";
+import { verifyReportLinkToken } from "@/lib/report-link-token";
 import {
   getLocalReportFixture,
   isLocalReportFixtureId,
@@ -75,12 +76,18 @@ export async function GET(
       .eq("id", contractId)
       .single();
 
-    if (
-      contractError ||
-      !contract ||
-      typeof contract.recovery_token_hash !== "string" ||
-      !verifyReportRecoveryToken(recoveryToken, contract.recovery_token_hash)
-    ) {
+    const validStoredRecoveryToken =
+      typeof contract?.recovery_token_hash === "string" &&
+      verifyReportRecoveryToken(recoveryToken, contract.recovery_token_hash);
+    const validEmailedReportToken =
+      contract?.payment_status === "paid" &&
+      typeof environment.REPORT_LINK_TOKEN_SECRET === "string" &&
+      verifyReportLinkToken(
+        recoveryToken,
+        contractId,
+        environment.REPORT_LINK_TOKEN_SECRET,
+      );
+    if (contractError || !contract || (!validStoredRecoveryToken && !validEmailedReportToken)) {
       return errorResponse(requestId, "This report link is invalid.", 403);
     }
     if (

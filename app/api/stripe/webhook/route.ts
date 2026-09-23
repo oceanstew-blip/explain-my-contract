@@ -15,6 +15,7 @@ import {
   getStripeWebhookEnvironment,
 } from "@/lib/server-env";
 import { sendReportReadyEmail } from "@/lib/report-email";
+import { createReportLinkToken } from "@/lib/report-link-token";
 import { createStripe } from "@/lib/stripe";
 import { paymentStateChangeFromEvent } from "@/lib/stripe-payment-state";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
@@ -124,6 +125,11 @@ export async function POST(request: Request): Promise<Response> {
           const intent = z.enum(["considering_signing", "already_signed"])
             .parse(analysis.intent);
           const report = validateAnalysisResult(intent, analysis.full_report);
+          const reportToken = createReportLinkToken(
+            contractId,
+            contract.report_expires_at,
+            emailEnvironment.REPORT_LINK_TOKEN_SECRET,
+          );
           const providerId = await sendReportReadyEmail({
             apiKey: emailEnvironment.RESEND_API_KEY,
             from: emailEnvironment.REPORT_EMAIL_FROM,
@@ -134,6 +140,7 @@ export async function POST(request: Request): Promise<Response> {
               agreementType: report.agreement_snapshot.agreement_type,
               expiresAt: contract.report_expires_at,
               findings: report.detailed_analysis,
+              reportUrl: `${emailEnvironment.APP_BASE_URL}/report/${contractId}#token=${encodeURIComponent(reportToken)}`,
             },
           });
           const { error: emailUpdateError } = await supabase

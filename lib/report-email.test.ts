@@ -19,6 +19,7 @@ const content = {
       location: "Section 8",
     },
   ],
+  reportUrl: "https://contracts.example.com/report/123#token=private-token",
 };
 
 describe("report-ready email", () => {
@@ -30,7 +31,9 @@ describe("report-ready email", () => {
       email.text.indexOf("Sixty-day renewal notice"),
     );
     expect(email.text).toMatch(/not attached/i);
+    expect(email.text).toContain(content.reportUrl);
     expect(email.html).toContain("Residential lease &lt;draft&gt;");
+    expect(email.html).toContain("Open my private report");
     expect(email.html).not.toContain("Residential lease <draft>");
   });
 

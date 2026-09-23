@@ -14,7 +14,7 @@ An educational Next.js application that translates a PDF contract into plain lan
 - A private recovery link can permanently delete an unpaid report after explicit confirmation; payment-linked records fail closed for support-assisted handling.
 - Stripe Checkout, signed webhooks, paid-report unlocking, failed-payment handling, full refunds, partial-refund audit records, and disputes are implemented behind `STRIPE_CHECKOUT_ENABLED=false`.
 - Checkout creates branded post-purchase invoices, never requests a phone number, and accepts active promotion codes. A 100%-off promotion leaves email as the only required contact field.
-- Optional transactional report-summary email is implemented behind `REPORT_EMAIL_ENABLED=false`. It sends up to three priority findings after a signed paid-checkout webhook, omits the uploaded PDF and full report, and records delivery without storing the recipient address in the application database.
+- Optional transactional report-summary email is implemented behind `REPORT_EMAIL_ENABLED=false`. It sends up to three priority findings and an expiring signed report link after a signed paid-checkout webhook, omits the uploaded PDF and full report, and records delivery without storing the recipient address in the application database.
 - Payment must remain disabled until Stripe test-mode integration, refund/support operations, and the remaining launch gates are complete.
 - Nothing in this folder is deployed automatically merely because the code exists locally.
 
