@@ -545,10 +545,28 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    return errorResponse(
-      requestId,
-      "We could not analyze this contract. Please try again.",
-      500,
-    );
+    if (process.env.DEPLOY_CONTEXT === "deploy-preview") {
+      const status =
+        typeof error === "object" && error !== null
+          ? Reflect.get(error, "status")
+          : undefined;
+      return jsonResponse(
+        requestId,
+        {
+          error: "We could not analyze this contract. Please try again.",
+          request_id: requestId,
+          diagnostic: {
+            error_name: error instanceof Error ? error.name : typeof error,
+            status:
+              typeof status === "number" && Number.isFinite(status)
+                ? status
+                : null,
+          },
+        },
+        { status: 500, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    return errorResponse(requestId, "We could not analyze this contract. Please try again.", 500);
   }
 }
