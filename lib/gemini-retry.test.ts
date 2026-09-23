@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   getGeminiModelCandidates,
+  isGeminiAbortError,
+  isGeminiNetworkError,
   isRetryableGeminiError,
   withGeminiRetry,
 } from "./gemini-retry";
@@ -36,6 +38,20 @@ describe("Gemini retry handling", () => {
       expect(isRetryableGeminiError({ status })).toBe(false);
     },
   );
+
+  it("recognizes provider abort errors without treating unrelated errors as aborts", () => {
+    expect(isGeminiAbortError(new DOMException("Timed out", "AbortError"))).toBe(
+      true,
+    );
+    expect(isGeminiAbortError(new Error("Different failure"))).toBe(false);
+    expect(isGeminiAbortError({ status: 503 })).toBe(false);
+  });
+
+  it("recognizes provider network errors without treating generic errors as network failures", () => {
+    expect(isGeminiNetworkError(new TypeError("fetch failed"))).toBe(true);
+    expect(isGeminiNetworkError({ name: "TypeError" })).toBe(true);
+    expect(isGeminiNetworkError(new Error("Different failure"))).toBe(false);
+  });
 
   it("retries a 503 and returns the later successful result", async () => {
     const operation = vi

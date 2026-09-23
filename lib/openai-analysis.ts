@@ -103,3 +103,32 @@ export async function generateOpenAIAnalysis(options: {
 
   return extractOutputText((await response.json()) as OpenAIResponseBody);
 }
+
+export async function generateAndValidateOpenAIAnalysis<T>(options: {
+  generate: () => Promise<string>;
+  validate: (output: string) => T;
+  onInvalidOutput?: (details: {
+    attempt: number;
+    error: GeminiOutputError;
+    willRetry: boolean;
+  }) => void;
+}): Promise<T> {
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const output = await options.generate();
+    try {
+      return options.validate(output);
+    } catch (error) {
+      if (!(error instanceof GeminiOutputError)) throw error;
+      options.onInvalidOutput?.({
+        attempt,
+        error,
+        willRetry: attempt < maxAttempts,
+      });
+      if (attempt === maxAttempts) throw error;
+    }
+  }
+
+  throw new GeminiOutputError("OpenAI returned repeated invalid output.");
+}
+import { GeminiOutputError } from "./gemini-output";

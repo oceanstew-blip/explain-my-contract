@@ -141,6 +141,24 @@ describe("getAnalysisConfig", () => {
     expect(prompt).toMatch(/reason\s+it resolves the identified concern/i);
   });
 
+  it("requires a cross-contract completeness and balance pass", () => {
+    const prompt = getAnalysisConfig("considering_signing").systemPrompt;
+
+    expect(prompt).toMatch(/referenced exhibit, schedule, policy, guideline, or attachment/i);
+    expect(prompt).toMatch(/record-retention terms/i);
+    expect(prompt).toMatch(/attorney-fee shifting/i);
+    expect(prompt).toMatch(/never call a liability provision a "complete waiver"/i);
+    expect(prompt).toMatch(/scan the same subjects for protections/i);
+    expect(prompt).toMatch(/multi-year record-retention term/i);
+    expect(prompt).toMatch(/do not label automatic renewal high_attention merely because it renews/i);
+    expect(prompt).toMatch(/do not call missing terms "legally\s+undefined"/i);
+    expect(prompt).toMatch(/critical-clause subjects/i);
+    expect(prompt).toMatch(/ownership and licenses/i);
+    expect(prompt).toMatch(/data access, export, deletion, and retention/i);
+    expect(prompt).toMatch(/ordinary installment schedule/i);
+    expect(prompt).toMatch(/never write "your signature commits/i);
+  });
+
   it("treats the selected side as prospective before signing", () => {
     const instruction = getAnalysisConfig(
       "considering_signing",
@@ -234,5 +252,67 @@ describe("validateAnalysisResult", () => {
         categories_found: ["Termination", "Termination"],
       }),
     ).toMatchObject({ categories_found: ["Termination"] });
+  });
+
+  it("rejects categories accidentally fused into one quoted string", () => {
+    expect(() =>
+      validateAnalysisResult("considering_signing", {
+        ...validResult,
+        categories_found: ["liability','disputes"],
+      }),
+    ).toThrow();
+  });
+
+  it("removes false execution claims when the source says signatures are simulated", () => {
+    const result = validateAnalysisResult(
+      "already_signed",
+      {
+        ...validResult,
+        detailed_analysis: [
+          {
+            ...validResult.detailed_analysis[0],
+            danger:
+              "According to the contract, your signature commits you to giving 30 days of notice.",
+          },
+          {
+            ...validResult.detailed_analysis[1],
+            danger: "Your signature means you pay within 90 days.",
+          },
+        ],
+      },
+      {
+        contractText:
+          "FICTIONAL TEST CONTRACT. The signatures below are simulated and are not real signatures.",
+      },
+    );
+
+    expect(result.detailed_analysis[0].danger).toBe(
+      "The contract describes the reviewed party as responsible for giving 30 days of notice.",
+    );
+    expect(result.detailed_analysis[1].danger).toBe(
+      "The contract states that the reviewed party pay within 90 days.",
+    );
+    expect(JSON.stringify(result)).not.toMatch(/your signature/i);
+  });
+
+  it("preserves legitimate signature-triggered payment language", () => {
+    const result = validateAnalysisResult(
+      "already_signed",
+      {
+        ...validResult,
+        agreement_snapshot: {
+          ...validResult.agreement_snapshot,
+          what_you_pay: ["$4,500 setup fee due at signature."],
+        },
+      },
+      {
+        contractText:
+          "FICTIONAL TEST CONTRACT. The signatures below are simulated and are not real signatures.",
+      },
+    );
+
+    expect(result.agreement_snapshot.what_you_pay).toEqual([
+      "$4,500 setup fee due at signature.",
+    ]);
   });
 });

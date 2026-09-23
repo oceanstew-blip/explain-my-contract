@@ -46,6 +46,25 @@ export function isRetryableGeminiError(error: unknown): boolean {
   return status !== undefined && RETRYABLE_STATUS_CODES.has(status);
 }
 
+export function isGeminiAbortError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    error.name === "AbortError"
+  );
+}
+
+export function isGeminiNetworkError(error: unknown): boolean {
+  return (
+    error instanceof TypeError ||
+    (typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "TypeError")
+  );
+}
+
 export function getGeminiModelCandidates(primaryModel?: string): string[] {
   const normalizedPrimary = primaryModel?.trim();
 

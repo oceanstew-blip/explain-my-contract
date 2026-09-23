@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { generateOpenAIAnalysis } from "./openai-analysis";
+import { GeminiOutputError } from "./gemini-output";
+import {
+  generateAndValidateOpenAIAnalysis,
+  generateOpenAIAnalysis,
+} from "./openai-analysis";
 
 const requestOptions = {
   apiKey: "test-key",
@@ -71,5 +75,45 @@ describe("OpenAI contract analysis fallback", () => {
     await expect(
       generateOpenAIAnalysis({ ...requestOptions, fetchImplementation }),
     ).rejects.toThrow("no structured analysis text");
+  });
+
+  it("retries one schema-invalid fallback response", async () => {
+    const generate = vi
+      .fn<() => Promise<string>>()
+      .mockResolvedValueOnce('{"ok":false}')
+      .mockResolvedValueOnce('{"ok":true}');
+    const onInvalidOutput = vi.fn();
+
+    await expect(
+      generateAndValidateOpenAIAnalysis({
+        generate,
+        validate: (output) => {
+          const parsed = JSON.parse(output) as { ok?: boolean };
+          if (!parsed.ok) throw new GeminiOutputError("Invalid schema");
+          return parsed;
+        },
+        onInvalidOutput,
+      }),
+    ).resolves.toEqual({ ok: true });
+
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(onInvalidOutput).toHaveBeenCalledWith(
+      expect.objectContaining({ attempt: 1, willRetry: true }),
+    );
+  });
+
+  it("fails closed after three schema-invalid fallback responses", async () => {
+    const generate = vi.fn<() => Promise<string>>().mockResolvedValue("{}");
+
+    await expect(
+      generateAndValidateOpenAIAnalysis({
+        generate,
+        validate: () => {
+          throw new GeminiOutputError("Invalid schema");
+        },
+      }),
+    ).rejects.toThrow("Invalid schema");
+
+    expect(generate).toHaveBeenCalledTimes(3);
   });
 });

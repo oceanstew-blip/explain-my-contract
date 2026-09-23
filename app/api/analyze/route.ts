@@ -27,10 +27,15 @@ import {
 } from "@/lib/gemini-output";
 import {
   getGeminiModelCandidates,
+  isGeminiAbortError,
+  isGeminiNetworkError,
   isRetryableGeminiError,
   withGeminiRetry,
 } from "@/lib/gemini-retry";
-import { generateOpenAIAnalysis } from "@/lib/openai-analysis";
+import {
+  generateAndValidateOpenAIAnalysis,
+  generateOpenAIAnalysis,
+} from "@/lib/openai-analysis";
 import {
   errorResponse,
   getRequestId,
@@ -308,7 +313,10 @@ export async function POST(request: Request): Promise<Response> {
 
           return parseAndValidateGeminiOutput(
             geminiResponse.text,
-            (value) => validateAnalysisResult(intent, value),
+            (value) =>
+              validateAnalysisResult(intent, value, {
+                contractText: extractedText,
+              }),
           );
         },
         {
@@ -331,7 +339,15 @@ export async function POST(request: Request): Promise<Response> {
         },
       );
     } catch (geminiError) {
-      if (!environment.OPENAI_API_KEY || !isRetryableGeminiError(geminiError)) {
+      const providerTimedOut =
+        isGeminiAbortError(geminiError) && !request.signal.aborted;
+      const providerNetworkFailed = isGeminiNetworkError(geminiError);
+      if (
+        !environment.OPENAI_API_KEY ||
+        (!isRetryableGeminiError(geminiError) &&
+          !providerTimedOut &&
+          !providerNetworkFailed)
+      ) {
         throw geminiError;
       }
 
@@ -348,21 +364,50 @@ export async function POST(request: Request): Promise<Response> {
         },
       });
 
-      const openAIOutput = await generateOpenAIAnalysis({
-        apiKey: environment.OPENAI_API_KEY,
-        model: environment.OPENAI_MODEL,
-        systemPrompt: analysisConfig.systemPrompt,
-        userInstruction: analysisConfig.userInstruction,
-        contractText: extractedText,
-        jsonSchema: analysisConfig.jsonSchema,
-        requestId,
-        requestSignal: request.signal,
-        timeoutMs: environment.OPENAI_REQUEST_TIMEOUT_MS,
+      const openAIApiKey = environment.OPENAI_API_KEY;
+      validatedResult = await generateAndValidateOpenAIAnalysis({
+        generate: () =>
+          generateOpenAIAnalysis({
+            apiKey: openAIApiKey,
+            model: environment.OPENAI_MODEL,
+            systemPrompt: analysisConfig.systemPrompt,
+            userInstruction: analysisConfig.userInstruction,
+            contractText: extractedText,
+            jsonSchema: analysisConfig.jsonSchema,
+            requestId,
+            requestSignal: request.signal,
+            timeoutMs: environment.OPENAI_REQUEST_TIMEOUT_MS,
+          }),
+        validate: (openAIOutput) =>
+          parseAndValidateGeminiOutput(
+            openAIOutput,
+            (value) =>
+              validateAnalysisResult(intent, value, {
+                contractText: extractedText,
+              }),
+          ),
+        onInvalidOutput: ({ attempt, error, willRetry }) => {
+          const validationCause = error.cause;
+          logServerFailure({
+            level: "warn",
+            event: willRetry
+              ? "openai_output_retry"
+              : "openai_output_rejected",
+            requestId,
+            route: "/api/analyze",
+            error: null,
+            metadata: {
+              model: environment.OPENAI_MODEL,
+              reason: "schema_invalid_output",
+              attempt,
+              validation_error:
+                validationCause instanceof Error
+                  ? validationCause.message.slice(0, 1_000)
+                  : null,
+            },
+          });
+        },
       });
-      validatedResult = parseAndValidateGeminiOutput(
-        openAIOutput,
-        (value) => validateAnalysisResult(intent, value),
-      );
     }
 
     const preview = createAnalysisPreview(validatedResult);
