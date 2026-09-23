@@ -54,4 +54,8 @@ jobs:
             sleep "$((attempt * 20))"
           done
       - run: supabase test db --local
+        env:
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
       - run: supabase db advisors --local
+        env:
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
