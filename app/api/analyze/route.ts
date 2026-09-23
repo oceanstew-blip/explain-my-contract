@@ -29,6 +29,7 @@ import {
   getGeminiModelCandidates,
   isGeminiAbortError,
   isGeminiNetworkError,
+  isGeminiRequestRejected,
   isRetryableGeminiError,
   withGeminiRetry,
 } from "@/lib/gemini-retry";
@@ -350,11 +351,13 @@ export async function POST(request: Request): Promise<Response> {
       const providerTimedOut =
         isGeminiAbortError(geminiError) && !request.signal.aborted;
       const providerNetworkFailed = isGeminiNetworkError(geminiError);
+      const providerRejectedRequest = isGeminiRequestRejected(geminiError);
       if (
         !environment.OPENAI_API_KEY ||
         (!isRetryableGeminiError(geminiError) &&
           !providerTimedOut &&
-          !providerNetworkFailed)
+          !providerNetworkFailed &&
+          !providerRejectedRequest)
       ) {
         throw geminiError;
       }

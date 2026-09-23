@@ -46,6 +46,10 @@ export function isRetryableGeminiError(error: unknown): boolean {
   return status !== undefined && RETRYABLE_STATUS_CODES.has(status);
 }
 
+export function isGeminiRequestRejected(error: unknown): boolean {
+  return statusFromError(error) === 400;
+}
+
 export function isGeminiAbortError(error: unknown): boolean {
   return (
     typeof error === "object" &&

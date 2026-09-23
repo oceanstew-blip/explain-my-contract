@@ -4,6 +4,7 @@ import {
   getGeminiModelCandidates,
   isGeminiAbortError,
   isGeminiNetworkError,
+  isGeminiRequestRejected,
   isRetryableGeminiError,
   withGeminiRetry,
 } from "./gemini-retry";
@@ -38,6 +39,12 @@ describe("Gemini retry handling", () => {
       expect(isRetryableGeminiError({ status })).toBe(false);
     },
   );
+
+  it("recognizes a provider-specific request rejection for cross-provider fallback", () => {
+    expect(isGeminiRequestRejected({ status: 400 })).toBe(true);
+    expect(isGeminiRequestRejected({ status: 401 })).toBe(false);
+    expect(isGeminiRequestRejected(new Error("Different failure"))).toBe(false);
+  });
 
   it("recognizes provider abort errors without treating unrelated errors as aborts", () => {
     expect(isGeminiAbortError(new DOMException("Timed out", "AbortError"))).toBe(
