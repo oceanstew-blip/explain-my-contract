@@ -2,7 +2,7 @@ const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
 const DEFAULT_GEMINI_MODELS = [
   "gemini-3.8-flash",
   "gemini-3.6-flash",
-  "gemini-3.1-flash-lite",
+  "gemini-3.5-flash",
 ] as const;
 
 type AttemptContext = {
@@ -44,6 +44,29 @@ function statusFromError(error: unknown): number | undefined {
 export function isRetryableGeminiError(error: unknown): boolean {
   const status = statusFromError(error);
   return status !== undefined && RETRYABLE_STATUS_CODES.has(status);
+}
+
+export function isGeminiRequestRejected(error: unknown): boolean {
+  return statusFromError(error) === 400;
+}
+
+export function isGeminiAbortError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    error.name === "AbortError"
+  );
+}
+
+export function isGeminiNetworkError(error: unknown): boolean {
+  return (
+    error instanceof TypeError ||
+    (typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "TypeError")
+  );
 }
 
 export function getGeminiModelCandidates(primaryModel?: string): string[] {

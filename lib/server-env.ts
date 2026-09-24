@@ -26,6 +26,14 @@ export function getAnalysisEnvironment() {
       .min(1_000)
       .max(120_000)
       .default(45_000),
+    OPENAI_API_KEY: nonEmptyString.optional(),
+    OPENAI_MODEL: nonEmptyString.default("gpt-5.6-terra"),
+    OPENAI_REQUEST_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(180_000)
+      .default(90_000),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: nonEmptyString,
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     RATE_LIMIT_HMAC_SECRET: nonEmptyString.min(32),
@@ -37,6 +45,7 @@ export function getAnalysisEnvironment() {
 
   assertSafeAnalysisSecurityConfig({
     nodeEnv: process.env.NODE_ENV,
+    deployContext: process.env.DEPLOY_CONTEXT ?? process.env.CONTEXT,
     siteKey: environment.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     secret: environment.TURNSTILE_SECRET,
     testMode: environment.TURNSTILE_TEST_MODE === "true",
@@ -51,8 +60,9 @@ export function getCheckoutEnvironment() {
     APP_BASE_URL: z.url(),
     CHECKOUT_TOKEN_SECRET: nonEmptyString.min(32),
     STRIPE_CHECKOUT_ENABLED: z.literal("true"),
-    STRIPE_PRICE_ID: nonEmptyString.startsWith("price_"),
-    STRIPE_SECRET_KEY: nonEmptyString.startsWith("sk_"),
+    STRIPE_PRICE_ID_SHORT: nonEmptyString.startsWith("price_"),
+    STRIPE_PRICE_ID_STANDARD: nonEmptyString.startsWith("price_"),
+    STRIPE_SECRET_KEY: nonEmptyString.regex(/^(sk|rk)_/),
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     SUPABASE_SECRET_KEY: nonEmptyString,
   });
@@ -61,15 +71,29 @@ export function getCheckoutEnvironment() {
 export function getReportEnvironment() {
   return readEnvironment({
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
+    REPORT_LINK_TOKEN_SECRET: nonEmptyString.min(32).optional(),
     SUPABASE_SECRET_KEY: nonEmptyString,
   });
 }
 
 export function getStripeWebhookEnvironment() {
   return readEnvironment({
-    STRIPE_SECRET_KEY: nonEmptyString.startsWith("sk_"),
+    STRIPE_SECRET_KEY: nonEmptyString.regex(/^(sk|rk)_/),
     STRIPE_WEBHOOK_SECRET: nonEmptyString.startsWith("whsec_"),
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     SUPABASE_SECRET_KEY: nonEmptyString,
+  });
+}
+
+export function getReportEmailEnvironment() {
+  if (process.env.REPORT_EMAIL_ENABLED !== "true") return null;
+
+  return readEnvironment({
+    REPORT_EMAIL_ENABLED: z.literal("true"),
+    RESEND_API_KEY: nonEmptyString.startsWith("re_"),
+    REPORT_EMAIL_FROM: nonEmptyString,
+    REPORT_EMAIL_REPLY_TO: z.email(),
+    REPORT_LINK_TOKEN_SECRET: nonEmptyString.min(32),
+    APP_BASE_URL: z.url(),
   });
 }

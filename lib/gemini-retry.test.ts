@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   getGeminiModelCandidates,
+  isGeminiAbortError,
+  isGeminiNetworkError,
+  isGeminiRequestRejected,
   isRetryableGeminiError,
   withGeminiRetry,
 } from "./gemini-retry";
@@ -11,7 +14,7 @@ describe("Gemini retry handling", () => {
     expect(getGeminiModelCandidates()).toEqual([
       "gemini-3.8-flash",
       "gemini-3.6-flash",
-      "gemini-3.1-flash-lite",
+      "gemini-3.5-flash",
     ]);
   });
 
@@ -19,7 +22,7 @@ describe("Gemini retry handling", () => {
     expect(getGeminiModelCandidates(" gemini-3.6-flash ")).toEqual([
       "gemini-3.6-flash",
       "gemini-3.8-flash",
-      "gemini-3.1-flash-lite",
+      "gemini-3.5-flash",
     ]);
   });
 
@@ -36,6 +39,26 @@ describe("Gemini retry handling", () => {
       expect(isRetryableGeminiError({ status })).toBe(false);
     },
   );
+
+  it("recognizes a provider-specific request rejection for cross-provider fallback", () => {
+    expect(isGeminiRequestRejected({ status: 400 })).toBe(true);
+    expect(isGeminiRequestRejected({ status: 401 })).toBe(false);
+    expect(isGeminiRequestRejected(new Error("Different failure"))).toBe(false);
+  });
+
+  it("recognizes provider abort errors without treating unrelated errors as aborts", () => {
+    expect(isGeminiAbortError(new DOMException("Timed out", "AbortError"))).toBe(
+      true,
+    );
+    expect(isGeminiAbortError(new Error("Different failure"))).toBe(false);
+    expect(isGeminiAbortError({ status: 503 })).toBe(false);
+  });
+
+  it("recognizes provider network errors without treating generic errors as network failures", () => {
+    expect(isGeminiNetworkError(new TypeError("fetch failed"))).toBe(true);
+    expect(isGeminiNetworkError({ name: "TypeError" })).toBe(true);
+    expect(isGeminiNetworkError(new Error("Different failure"))).toBe(false);
+  });
 
   it("retries a 503 and returns the later successful result", async () => {
     const operation = vi

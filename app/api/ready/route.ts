@@ -3,16 +3,39 @@ import {
   jsonResponse,
   logServerFailure,
 } from "@/lib/request-observability";
-import { assertDatabaseReady } from "@/lib/readiness";
+import {
+  assertDatabaseReady,
+  DatabaseReadinessError,
+} from "@/lib/readiness";
 import {
   getAnalysisEnvironment,
   getCheckoutEnvironment,
+  getReportEmailEnvironment,
   getStripeWebhookEnvironment,
 } from "@/lib/server-env";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+function getDeployPreviewDiagnostic(error: unknown) {
+  if (
+    (process.env.DEPLOY_CONTEXT ?? process.env.CONTEXT) !== "deploy-preview"
+  ) {
+    return {};
+  }
+
+  if (error instanceof DatabaseReadinessError) {
+    return {
+      diagnostic: {
+        stage: "database",
+        code: error.code ?? "unknown",
+      },
+    };
+  }
+
+  return { diagnostic: { stage: "configuration" } };
+}
 
 export async function GET(request: Request): Promise<Response> {
   const requestId = getRequestId(request.headers);
@@ -24,6 +47,7 @@ export async function GET(request: Request): Promise<Response> {
     if (paymentsEnabled) {
       getCheckoutEnvironment();
       getStripeWebhookEnvironment();
+      getReportEmailEnvironment();
     }
 
     const supabase = createSupabaseAdmin(
@@ -38,6 +62,8 @@ export async function GET(request: Request): Promise<Response> {
         status: "ready",
         dependencies: { database: "ok" },
         payments: paymentsEnabled ? "enabled" : "disabled",
+        report_email:
+          process.env.REPORT_EMAIL_ENABLED === "true" ? "enabled" : "disabled",
       },
       { headers: { "Cache-Control": "no-store" } },
     );
@@ -51,7 +77,11 @@ export async function GET(request: Request): Promise<Response> {
 
     return jsonResponse(
       requestId,
-      { status: "not_ready", request_id: requestId },
+      {
+        status: "not_ready",
+        request_id: requestId,
+        ...getDeployPreviewDiagnostic(error),
+      },
       {
         status: 503,
         headers: {

@@ -2,11 +2,17 @@
 
 import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import Script from "next/script";
 
 import { apiErrorMessage } from "@/lib/api-error";
 import { ANALYSIS_DISCLAIMER_TEXT } from "@/lib/analysis-disclaimer";
 import type { AnalysisIntent } from "@/lib/analysis-intent";
+import {
+  CONTRACT_ROLE_OPTIONS,
+  CONTRACT_TYPE_LABELS,
+  type ContractType,
+} from "@/lib/contract-type";
 
 type SubmissionState =
   | { status: "idle" }
@@ -49,6 +55,8 @@ type AnalysisPreview = Omit<AnalysisResult, "detailed_analysis"> & {
 };
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const TURNSTILE_ALWAYS_PASS_SITE_KEY = "1x00000000000000000000AA";
+const LOCAL_TURNSTILE_TEST_TOKEN = "local-development-turnstile-bypass";
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 const REVIEW_ONLY = process.env.NEXT_PUBLIC_REVIEW_ONLY === "true";
 
@@ -281,6 +289,7 @@ function validatePdf(selectedFile: File): string | null {
 }
 
 export default function Home() {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const heroCtaRef = useRef<HTMLAnchorElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
@@ -292,6 +301,9 @@ export default function Home() {
   const [turnstileReady, setTurnstileReady] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [selectedIntent, setSelectedIntent] = useState<AnalysisIntent>("considering_signing");
+  const [contractType, setContractType] = useState<ContractType | "">("");
+  const [reviewPerspective, setReviewPerspective] = useState("");
+  const [customPerspective, setCustomPerspective] = useState("");
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState<ContractExample["id"]>("brand");
   const [demoRun, setDemoRun] = useState(0);
@@ -304,6 +316,11 @@ export default function Home() {
   const [submission, setSubmission] = useState<SubmissionState>({
     status: "idle",
   });
+  const localTurnstileTestMode =
+    process.env.NODE_ENV === "development" &&
+    TURNSTILE_SITE_KEY === TURNSTILE_ALWAYS_PASS_SITE_KEY;
+  const browserVerificationToken =
+    turnstileToken || (localTurnstileTestMode ? LOCAL_TURNSTILE_TEST_TOKEN : "");
 
   useEffect(() => {
     if (
@@ -415,6 +432,9 @@ export default function Home() {
 
     setFile(selectedFile);
     setDisclaimerAcknowledged(false);
+    setContractType("");
+    setReviewPerspective("");
+    setCustomPerspective("");
     setSubmission({ status: "idle" });
   }
 
@@ -431,6 +451,9 @@ export default function Home() {
   function resetFile() {
     setFile(null);
     setDisclaimerAcknowledged(false);
+    setContractType("");
+    setReviewPerspective("");
+    setCustomPerspective("");
     setTurnstileToken("");
     setSubmission({ status: "idle" });
     if (inputRef.current) inputRef.current.value = "";
@@ -439,11 +462,18 @@ export default function Home() {
   async function processDocument(intent: AnalysisIntent) {
     if (!file) return;
 
-    const submittedTurnstileToken = turnstileToken;
+    const submittedTurnstileToken = browserVerificationToken;
 
     const formData = new FormData();
     formData.set("file", file);
     formData.set("intent", intent);
+    formData.set("contract_type", contractType);
+    formData.set(
+      "review_perspective",
+      reviewPerspective === "Other"
+        ? customPerspective.trim()
+        : reviewPerspective,
+    );
     formData.set(
       "disclaimer_acknowledged",
       disclaimerAcknowledged ? "true" : "false",
@@ -482,6 +512,8 @@ export default function Home() {
         throw new Error("The analysis response was incomplete. Try again.");
       }
 
+      const reportUrl = `/report/${result.contract_id}#token=${encodeURIComponent(result.recovery_token)}`;
+
       setSubmission({
         status: "success",
         contractId: result.contract_id,
@@ -489,6 +521,7 @@ export default function Home() {
         intent: result.intent,
         result: result.tease,
       });
+      router.push(reportUrl);
     } catch (error) {
       setSubmission({
         status: "error",
@@ -502,6 +535,10 @@ export default function Home() {
 
   const isSubmitting = submission.status === "submitting";
   const isAlreadySigned = selectedIntent === "already_signed";
+  const finalPerspective = reviewPerspective === "Other"
+    ? customPerspective.trim()
+    : reviewPerspective;
+  const roleOptions = contractType ? CONTRACT_ROLE_OPTIONS[contractType] : [];
   const selectedContract = CONTRACT_EXAMPLES.find((contract) => contract.id === selectedContractId) ?? CONTRACT_EXAMPLES[0];
 
   return (
@@ -666,6 +703,31 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="why-section" data-reveal>
+          <div className="why-statement">
+            <h2>Contract analysis should start with one question: <em>What does this mean for you?</em></h2>
+            <p>Explain My Contract Now looks at the agreement from your side, in your situation, without turning every clause into a scare tactic.</p>
+          </div>
+          <div className="why-reasons" aria-label="Why choose Explain My Contract Now">
+            <article>
+              <strong>Your side of the agreement</strong>
+              <p>Tell us whether you are the tenant, employee, client, provider, landlord, or another named party. The report is written from that perspective.</p>
+            </article>
+            <article>
+              <strong>Before or after you sign</strong>
+              <p>Preparing to sign and understanding something you already signed are different problems. The analysis changes with your situation.</p>
+            </article>
+            <article>
+              <strong>Risks and protections</strong>
+              <p>See what deserves attention, along with the terms that protect you or give you useful options.</p>
+            </article>
+            <article>
+              <strong>One report, no subscription</strong>
+              <p>Pay for the contract you need help understanding. Your original PDF is not retained, and your private report automatically expires.</p>
+            </article>
+          </div>
+        </section>
+
         <section className="sample-section section-shell" data-reveal>
           <div className="section-heading">
             <span>Illustrative sample based on a fictional service agreement</span>
@@ -758,8 +820,10 @@ export default function Home() {
                 Reading your contract
               </h2>
               <p className="mt-2 text-sm text-brand-muted">
-                Most reports are ready in under a minute. Keep this page open;
-                you will not be charged if the analysis fails.
+                Most reports are ready in about a minute. If the analysis
+                service is busy, we will automatically try another supported
+                model, so it may take a little longer. Keep this page open; you
+                will not be charged if the analysis fails.
               </p>
             </div>
           ) : submission.status === "success" ? (
@@ -775,11 +839,73 @@ export default function Home() {
                 {file.name}
               </p>
               <h2 className="mt-3 font-fraunces text-2xl font-semibold text-brand-indigo sm:text-3xl">
-                Pick your level of “what the heck?”
+                Pick your level of “what the hell?”
               </h2>
               <p className="mt-2 text-sm text-brand-muted">
                 Your answer changes what the analysis looks for.
               </p>
+
+              <label className="mt-6 w-full text-left text-sm font-bold text-brand-indigo">
+                1. What kind of contract is this?
+                <span className="mt-2 block text-xs font-normal leading-5 text-brand-muted">
+                  This changes the checklist used to review your document.
+                </span>
+                <select
+                  className="mt-3 w-full rounded-xl border border-brand-border bg-white px-4 py-3 text-sm font-normal text-brand-ink outline-none focus:border-brand-action focus:ring-2 focus:ring-brand-action/20"
+                  value={contractType}
+                  onChange={(event) => {
+                    setContractType(event.currentTarget.value as ContractType | "");
+                    setReviewPerspective("");
+                    setCustomPerspective("");
+                  }}
+                >
+                  <option value="">Choose a contract type</option>
+                  {Object.entries(CONTRACT_TYPE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="mt-6 w-full text-left text-sm font-bold text-brand-indigo">
+                2. Which side are you—or would you be—on?
+                <span className="mt-2 block text-xs font-normal leading-5 text-brand-muted">
+                  Choose the role whose money, responsibilities, deadlines, and options should be prioritized.
+                </span>
+                <select
+                  className="mt-3 w-full rounded-xl border border-brand-border bg-white px-4 py-3 text-sm font-normal text-brand-ink outline-none focus:border-brand-action focus:ring-2 focus:ring-brand-action/20 disabled:bg-brand-canvas-deep"
+                  disabled={!contractType}
+                  value={reviewPerspective}
+                  onChange={(event) => {
+                    setReviewPerspective(event.currentTarget.value);
+                    if (event.currentTarget.value !== "Other") setCustomPerspective("");
+                  }}
+                >
+                  <option value="">Choose your side</option>
+                  {roleOptions.map((role) => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </label>
+
+              {reviewPerspective === "Other" ? (
+                <label className="mt-4 w-full text-left text-sm font-bold text-brand-indigo">
+                  Name the role shown in the contract
+                  <input
+                    className="mt-2 w-full rounded-xl border border-brand-border bg-white px-4 py-3 text-sm font-normal text-brand-ink outline-none focus:border-brand-action focus:ring-2 focus:ring-brand-action/20"
+                    maxLength={120}
+                    placeholder="For example: Guarantor or Additional insured"
+                    type="text"
+                    value={customPerspective}
+                    onChange={(event) => setCustomPerspective(event.currentTarget.value)}
+                  />
+                </label>
+              ) : null}
+
+              {contractType === "insurance_policy" ? (
+                <p className="mt-4 w-full rounded-xl border border-brand-border bg-brand-canvas-deep px-4 py-3 text-left text-xs leading-5 text-brand-ink">
+                  Insurance review is in early beta. The report can organize limits, deductibles, exclusions, endorsements, and notice duties, but it cannot confirm whether a particular claim is covered.
+                </p>
+              ) : null}
 
               <label className="mt-6 flex w-full items-start gap-3 rounded-2xl border border-brand-border bg-white px-4 py-4 text-left text-sm leading-6 text-brand-ink">
                 <input
@@ -794,6 +920,11 @@ export default function Home() {
               </label>
 
               <div className="mt-5 min-h-[65px]" ref={turnstileContainerRef} />
+              {localTurnstileTestMode ? (
+                <p className="mt-2 text-xs font-semibold text-brand-action">
+                  Local test verification is ready.
+                </p>
+              ) : null}
               {!TURNSTILE_SITE_KEY ? (
                 <p className="mt-2 text-xs font-semibold text-red-800" role="alert">
                   Browser verification is not configured.
@@ -803,7 +934,7 @@ export default function Home() {
               <div className="mt-7 grid w-full gap-4 sm:grid-cols-2">
                 <button
                   className="rounded-2xl border-2 border-brand-action bg-white px-5 py-5 text-left font-bold text-brand-action transition hover:bg-brand-canvas-deep focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action disabled:cursor-not-allowed disabled:border-brand-border disabled:text-brand-muted disabled:opacity-60"
-                  disabled={!disclaimerAcknowledged || !turnstileToken}
+                  disabled={!contractType || !finalPerspective || !disclaimerAcknowledged || !browserVerificationToken}
                   type="button"
                   onClick={() => processDocument("considering_signing")}
                 >
@@ -814,7 +945,7 @@ export default function Home() {
                 </button>
                 <button
                   className="rounded-2xl border-2 border-brand-action bg-brand-action px-5 py-5 text-left font-bold text-white shadow-lg shadow-brand-action/15 transition hover:border-brand-indigo hover:bg-brand-indigo focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-action disabled:cursor-not-allowed disabled:border-brand-border disabled:bg-brand-muted disabled:opacity-60"
-                  disabled={!disclaimerAcknowledged || !turnstileToken}
+                  disabled={!contractType || !finalPerspective || !disclaimerAcknowledged || !browserVerificationToken}
                   type="button"
                   onClick={() => processDocument("already_signed")}
                 >
@@ -865,7 +996,7 @@ export default function Home() {
           <div className="handling-lead"><h2>How your contract is handled</h2><p>Clear language about what happens to your information.</p></div>
           <div className="handling-copy">
             <p><strong>Your original PDF is not retained.</strong></p>
-            <p>Text extracted from the contract is sent to Google Gemini for analysis. The resulting report is temporarily stored in Supabase and automatically expires.</p>
+            <p>Text extracted from the contract is sent to Google Gemini for analysis. If Gemini is unavailable, it may be sent to OpenAI as a backup. The resulting report is temporarily stored in Supabase and automatically expires.</p>
             <p>Your report is accessed through a private link. Anyone who has that link can access it, so do not share it with anyone you do not want to see it.</p>
           </div>
         </section>
@@ -880,7 +1011,7 @@ export default function Home() {
             <details><summary>Is this legal advice?</summary><p>No. The report is educational and designed to help you understand the language and structure of your contract. It is not a substitute for advice from a qualified attorney.</p></details>
             <details><summary>Will it tell me whether I should sign?</summary><p>No. It helps you understand the terms, obligations, deadlines, restrictions, and other provisions so you can decide what questions you want answered.</p></details>
             <details><summary>Can I use it if I already signed?</summary><p>Yes. The report can help you understand what the contract says, identify obligations or deadlines that may still matter, and spot terms to research or discuss with an attorney.</p></details>
-            <details><summary>Is my contract stored?</summary><p>The original PDF is not retained. Extracted contract text is sent to Google Gemini for analysis, and the resulting report is temporarily stored in Supabase before it automatically expires.</p></details>
+            <details><summary>Is my contract stored?</summary><p>The original PDF is not retained. Extracted contract text is sent to Google Gemini for analysis and may be sent to OpenAI if Gemini is unavailable. The resulting report is temporarily stored in Supabase before it automatically expires.</p></details>
             <details><summary>Who can see my report?</summary><p>The report is available through a private link. Anyone with that link can access it, so do not share it with anyone you do not want to see the report.</p></details>
             <details><summary>Can the report be wrong?</summary><p>AI-generated analysis can miss context or misunderstand contract language. For important decisions, verify key terms against the original contract and consult an attorney when appropriate.</p></details>
           </div>

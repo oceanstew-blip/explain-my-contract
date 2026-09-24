@@ -11,6 +11,7 @@ import {
 } from "@/lib/request-observability";
 import { getCheckoutEnvironment } from "@/lib/server-env";
 import { canStartCheckout } from "@/lib/payment-status";
+import { checkoutPriceIdForPageCount } from "@/lib/checkout-pricing";
 import { createStripe } from "@/lib/stripe";
 import {
   addCalendarYears,
@@ -59,7 +60,7 @@ export async function POST(request: Request): Promise<Response> {
     const { data: contract, error } = await supabase
       .from("contracts")
       .select(
-        "id, payment_status, stripe_session_id, stripe_checkout_version, report_expires_at, report_expired_at",
+        "id, page_count, payment_status, stripe_session_id, stripe_checkout_version, report_expires_at, report_expired_at",
       )
       .eq("id", contractId)
       .single();
@@ -108,16 +109,30 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const version = Number(contract.stripe_checkout_version ?? 0) + 1;
+    const priceId = checkoutPriceIdForPageCount(contract.page_count, {
+      short: environment.STRIPE_PRICE_ID_SHORT,
+      standard: environment.STRIPE_PRICE_ID_STANDARD,
+    });
     const checkout = await stripe.checkout.sessions.create(
       {
         mode: "payment",
+        allow_promotion_codes: true,
+        phone_number_collection: { enabled: false },
+        wallet_options: { link: { display: "never" } },
+        invoice_creation: { enabled: true },
         client_reference_id: contractId,
-        line_items: [{ price: environment.STRIPE_PRICE_ID, quantity: 1 }],
+        line_items: [{ price: priceId, quantity: 1 }],
         metadata: { contract_id: contractId },
         payment_intent_data: { metadata: { contract_id: contractId } },
         expires_at: Math.floor(reportExpiration.getTime() / 1_000),
         success_url: `${environment.APP_BASE_URL}/report/${contractId}?payment=success`,
         cancel_url: `${environment.APP_BASE_URL}/report/${contractId}?payment=cancelled`,
+        custom_text: {
+          submit: {
+            message:
+              "Beta tester? Add your promo code before completing checkout.",
+          },
+        },
       },
       { idempotencyKey: `contract-checkout:${contractId}:${version}` },
     );

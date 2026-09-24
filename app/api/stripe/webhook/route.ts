@@ -1,15 +1,23 @@
 import "server-only";
 
 import type Stripe from "stripe";
+import { z } from "zod";
 
+import { validateAnalysisResult } from "@/lib/analysis-config";
 import {
   errorResponse,
   getRequestId,
   jsonResponse,
   logServerFailure,
 } from "@/lib/request-observability";
-import { getStripeWebhookEnvironment } from "@/lib/server-env";
+import {
+  getReportEmailEnvironment,
+  getStripeWebhookEnvironment,
+} from "@/lib/server-env";
+import { sendReportReadyEmail } from "@/lib/report-email";
+import { createReportLinkToken } from "@/lib/report-link-token";
 import { createStripe } from "@/lib/stripe";
+import { completedCheckoutUnlocksReport } from "@/lib/stripe-checkout-completion";
 import { paymentStateChangeFromEvent } from "@/lib/stripe-payment-state";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -24,7 +32,7 @@ function paidCheckoutSession(event: Stripe.Event): Stripe.Checkout.Session | nul
   }
 
   const session = event.data.object;
-  return session.payment_status === "paid" ? session : null;
+  return completedCheckoutUnlocksReport(session) ? session : null;
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -86,6 +94,69 @@ export async function POST(request: Request): Promise<Response> {
       });
 
       if (error) throw new Error(`Could not record payment: ${error.message}`);
+
+      const emailEnvironment = getReportEmailEnvironment();
+      if (emailEnvironment) {
+        const recipient = z.email().safeParse(
+          session.customer_details?.email ?? session.customer_email,
+        );
+        if (!recipient.success) {
+          throw new Error("Paid checkout did not include a valid customer email.");
+        }
+
+        const [{ data: contract, error: contractError }, { data: analysis, error: analysisError }] =
+          await Promise.all([
+            supabase
+              .from("contracts")
+              .select("report_expires_at, report_email_sent_at")
+              .eq("id", contractId)
+              .single(),
+            supabase
+              .from("analyses")
+              .select("intent, full_report")
+              .eq("contract_id", contractId)
+              .single(),
+          ]);
+
+        if (contractError || !contract || analysisError || !analysis) {
+          throw new Error("Could not load the completed report for email delivery.");
+        }
+
+        if (!contract.report_email_sent_at) {
+          const intent = z.enum(["considering_signing", "already_signed"])
+            .parse(analysis.intent);
+          const report = validateAnalysisResult(intent, analysis.full_report);
+          const reportToken = createReportLinkToken(
+            contractId,
+            contract.report_expires_at,
+            emailEnvironment.REPORT_LINK_TOKEN_SECRET,
+          );
+          const providerId = await sendReportReadyEmail({
+            apiKey: emailEnvironment.RESEND_API_KEY,
+            from: emailEnvironment.REPORT_EMAIL_FROM,
+            replyTo: emailEnvironment.REPORT_EMAIL_REPLY_TO,
+            to: recipient.data,
+            contractId,
+            content: {
+              agreementType: report.agreement_snapshot.agreement_type,
+              expiresAt: contract.report_expires_at,
+              findings: report.detailed_analysis,
+              reportUrl: `${emailEnvironment.APP_BASE_URL}/report/${contractId}#token=${encodeURIComponent(reportToken)}`,
+            },
+          });
+          const { error: emailUpdateError } = await supabase
+            .from("contracts")
+            .update({
+              report_email_sent_at: new Date().toISOString(),
+              report_email_provider_id: providerId,
+            })
+            .eq("id", contractId)
+            .is("report_email_sent_at", null);
+          if (emailUpdateError) {
+            throw new Error("Could not record report email delivery.");
+          }
+        }
+      }
       return jsonResponse(requestId, { received: true });
     }
 
