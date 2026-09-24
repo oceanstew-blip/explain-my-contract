@@ -621,7 +621,8 @@ export default function Home() {
             onMouseLeave={() => setInteractionPaused(false)}
             ref={demoRef}
           >
-            <div className="contract-tabs" aria-label="Choose a fictional contract example" role="tablist">
+            <p className="demo-example-label">Three examples—not the limit</p>
+            <div className="contract-tabs" aria-label="Explore three fictional contract examples" role="tablist">
               {CONTRACT_EXAMPLES.map((contract) => (
                 <button
                   aria-selected={contract.id === selectedContractId}
@@ -636,7 +637,7 @@ export default function Home() {
               ))}
             </div>
             <div className="demo-toolbar">
-              <span>Fictional composite example</span>
+              <span>Fictional composite example · many other contract types welcome</span>
               <div>
                 <button aria-label={manualPaused ? "Play contract demonstration" : "Pause contract demonstration"} onClick={() => setManualPaused((value) => !value)} type="button">{manualPaused ? "Play" : "Pause"}</button>
                 <button onClick={() => { setManualPaused(false); setDemoRun((value) => value + 1); }} type="button">Replay</button>
@@ -728,6 +729,25 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="contract-breadth section-shell" data-reveal>
+          <div className="contract-breadth-lead">
+            <span className="section-eyebrow">Many contracts. One starting question.</span>
+            <h2>Your contract does not need to fit one of the examples.</h2>
+            <p>Explain My Contract Now reviews many everyday personal and business agreements from the side you are—or would be—on.</p>
+          </div>
+          <div className="contract-breadth-list" aria-label="Examples of supported contract categories">
+            <span>Rental and lease</span>
+            <span>Employment and contractor</span>
+            <span>Client and service</span>
+            <span>Brand and sponsorship</span>
+            <span>Vendor and purchase</span>
+            <span>NDA and confidentiality</span>
+            <span>Coaching, membership, and subscription</span>
+            <span>Insurance policy</span>
+          </div>
+          <p className="contract-breadth-note"><strong>Don’t see yours?</strong> Upload it anyway. Choose “Another kind of contract” and tell us which side you’re on.</p>
+        </section>
+
         <section className="sample-section section-shell" data-reveal>
           <div className="section-heading">
             <span>Illustrative sample based on a fictional service agreement</span>
@@ -763,6 +783,7 @@ export default function Home() {
           <div className="upload-heading" data-reveal>
             <h2>Explain My Contract Now</h2>
             <p>{REVIEW_ONLY ? "This public preview is for reviewing the experience. Contract uploads are intentionally disabled." : `${isAlreadySigned ? "Upload the contract you already signed." : "Upload the contract you are considering signing."} PDF only, 10 MB maximum.`}</p>
+            {!REVIEW_ONLY ? <p className="upload-breadth">Your contract does not need to fit a category. Choose “Another kind of contract” if you do not see an exact match.</p> : null}
           </div>
 
         <div
