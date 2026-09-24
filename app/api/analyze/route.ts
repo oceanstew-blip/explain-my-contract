@@ -390,7 +390,7 @@ export async function POST(request: Request): Promise<Response> {
         event: "analysis_provider_fallback",
         requestId,
         route: "/api/analyze",
-        error: null,
+        error: geminiError,
         metadata: {
           from_provider: "google_gemini",
           to_provider: "openai",
