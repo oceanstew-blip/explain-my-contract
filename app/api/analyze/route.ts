@@ -62,6 +62,10 @@ const LOCAL_TURNSTILE_TEST_TOKEN = "local-development-turnstile-bypass";
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_EXTRACTED_CHARACTERS = 750_000;
+// Netlify allows 60 seconds for a synchronous function. Keep both providers
+// inside that shared window, with enough time left to persist the report.
+const GEMINI_FALLBACK_TIMEOUT_MS = 15_000;
+const OPENAI_FALLBACK_TIMEOUT_MS = 35_000;
 
 function sanitizeFileName(name: string): string {
   const baseName = name.split(/[\\/]/).pop() ?? "contract.pdf";
@@ -320,7 +324,10 @@ export async function POST(request: Request): Promise<Response> {
               abortSignal: request.signal,
               httpOptions: {
                 timeout: environment.OPENAI_API_KEY
-                  ? Math.min(environment.GEMINI_REQUEST_TIMEOUT_MS, 1_000)
+                  ? Math.min(
+                      environment.GEMINI_REQUEST_TIMEOUT_MS,
+                      GEMINI_FALLBACK_TIMEOUT_MS,
+                    )
                   : environment.GEMINI_REQUEST_TIMEOUT_MS,
               },
               systemInstruction: analysisConfig.systemPrompt,
@@ -403,7 +410,10 @@ export async function POST(request: Request): Promise<Response> {
             jsonSchema: analysisConfig.jsonSchema,
             requestId,
             requestSignal: request.signal,
-            timeoutMs: environment.OPENAI_REQUEST_TIMEOUT_MS,
+            timeoutMs: Math.min(
+              environment.OPENAI_REQUEST_TIMEOUT_MS,
+              OPENAI_FALLBACK_TIMEOUT_MS,
+            ),
           }),
         validate: (openAIOutput) =>
           parseAndValidateGeminiOutput(
