@@ -47,8 +47,8 @@ describe("report-ready email", () => {
 
     await expect(sendReportReadyEmail({
       apiKey: "re_test",
-      from: "Explain My Contract <reports@example.com>",
-      replyTo: "support@example.com",
+      from: "Explain My Contract Now <reports@tamistewartconsults.com>",
+      replyTo: "explainmycontractnow@gmail.com",
       to: "tester@example.com",
       contractId: "11111111-1111-4111-8111-111111111111",
       content,
@@ -63,5 +63,12 @@ describe("report-ready email", () => {
         }),
       }),
     );
+
+    const request = fetchImplementation.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(String(request.body))).toMatchObject({
+      from: "Explain My Contract Now <reports@tamistewartconsults.com>",
+      reply_to: "explainmycontractnow@gmail.com",
+      to: ["tester@example.com"],
+    });
   });
 });
