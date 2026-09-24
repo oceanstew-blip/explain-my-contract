@@ -45,18 +45,27 @@ procedures before launch.
 
 ## Transactional email setup
 
-Recommended product addresses for the Tami Stewart Consults domain:
+Recommended product addresses:
 
 - Sender: `Explain My Contract Now <reports@tamistewartconsults.com>`
-- Monitored reply-to: `help@tamistewartconsults.com`
+- Dedicated monitored reply-to: `explainmycontractnow@gmail.com`
 
 Inbound mail is separate from transactional sending. Confirm that both
-addresses route to a monitored inbox, then verify the sending domain with the
-transactional provider before setting `REPORT_EMAIL_ENABLED=true`. Configure
+sender domain with the transactional provider before setting
+`REPORT_EMAIL_ENABLED=true`. The reply-to address is the separate project inbox;
+customer replies do not need to go to the sender mailbox. Configure
 `REPORT_LINK_TOKEN_SECRET` as a unique server-only value of at least 32
 characters. The emailed report URL carries its signed access token in the URL
 fragment so ordinary HTTP requests and link previews do not send that token to
 the server; the report client exchanges it through the authenticated API call.
+
+`REPORT_EMAIL_FROM` and `REPORT_EMAIL_REPLY_TO` are server-only deployment
+variables. The report sender passes both values to Resend for every generated
+report; replies go to `REPORT_EMAIL_REPLY_TO`. The Stripe customer-support
+address is configured separately in Stripe's Public details settings. Stripe
+customer receipts/refund emails are separate toggles from team and account-owner
+alerts, so changing the support address must not be used to redirect security,
+dispute, payout, or account-status notifications.
 
 ## Verification
 
