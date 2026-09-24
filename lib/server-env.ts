@@ -27,7 +27,7 @@ export function getAnalysisEnvironment() {
       .max(120_000)
       .default(45_000),
     OPENAI_API_KEY: nonEmptyString.optional(),
-    OPENAI_MODEL: nonEmptyString.default("gpt-5.6-terra"),
+    OPENAI_MODEL: nonEmptyString.default("gpt-5-mini"),
     OPENAI_REQUEST_TIMEOUT_MS: z.coerce
       .number()
       .int()
