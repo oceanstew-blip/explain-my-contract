@@ -7,14 +7,24 @@ import {
 } from "./contract-type";
 
 describe("contractTypeSchema", () => {
-  it.each(["rental_lease", "brand_deal", "insurance_policy", "other"])(
+  it.each([
+    "rental_lease",
+    "employment_contractor",
+    "service_agreement",
+    "brand_deal",
+    "vendor_purchase",
+    "confidentiality",
+    "coaching_membership",
+    "insurance_policy",
+    "other",
+  ])(
     "accepts %s",
     (contractType) => {
       expect(contractTypeSchema.parse(contractType)).toBe(contractType);
     },
   );
 
-  it.each([undefined, null, "", "employment"])(
+  it.each([undefined, null, "", "court_filing"])(
     "rejects an unsupported contract type: %s",
     (contractType) => {
       expect(contractTypeSchema.safeParse(contractType).success).toBe(false);

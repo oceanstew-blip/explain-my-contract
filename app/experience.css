@@ -13,6 +13,14 @@
 .experience .hero-action { margin-top:2.2rem; animation:line-arrive .85s .55s both; }
 .experience .contract-demo { background:linear-gradient(145deg,#e1f5ff,#fff3ef); border:1px solid #b4c3e0; box-shadow:0 20px 50px #0d1b4c12; }
 .experience .contract-tabs button { font-size:.9375rem; line-height:1.35; }
+.experience .demo-example-label { margin:0 0 .45rem; color:#061d95; font-size:.72rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.experience .contract-breadth { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(22rem,.95fr); gap:clamp(2rem,6vw,5rem); padding-block:clamp(5rem,9vw,8rem); border-top:1px solid #b4c3e0; }
+.experience .contract-breadth-lead h2 { margin-top:.8rem; color:#061d95; font-family:var(--font-fraunces); font-size:clamp(2.35rem,4.5vw,4.5rem); font-weight:600; line-height:1; letter-spacing:-.04em; text-wrap:balance; }
+.experience .contract-breadth-lead p { max-width:42rem; margin-top:1.25rem; color:#536483; font-size:1.05rem; line-height:1.7; }
+.experience .contract-breadth-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; gap:.65rem; }
+.experience .contract-breadth-list span { min-height:4.5rem; padding:1rem 1.1rem; border:1px solid #b4c3e0; border-radius:14px; background:#fff; color:#061d95; font-weight:750; line-height:1.35; box-shadow:4px 4px 0 #e8eef8; }
+.experience .contract-breadth-note { grid-column:1/-1; margin:0; padding:1.1rem 1.25rem; border-radius:14px; background:#e8eef8; color:#21345b; line-height:1.6; }
+.experience .upload-breadth { padding:.8rem 1rem; border-left:4px solid #2f6ad2; background:#e8eef8; color:#21345b; }
 .experience .transformation-stage { min-height:620px; }
 .experience .trust-line { max-width:45ch; line-height:1.7; }
 .motion-toggle { position:fixed; z-index:45; right:1rem; bottom:1rem; padding:.7rem 1rem; border:1px solid #b4c3e0; border-radius:30px; background:#fff; color:#0d1b4c; font-size:.7rem; box-shadow:0 3px 16px #0d1b4c12; }
@@ -74,7 +82,7 @@
 @keyframes terms-drift { to { transform:translateX(-50%); } }
 @keyframes detail-travel { from { transform:translateX(-20%); } to { transform:translateX(180%); } }
 @media(max-width:1023px) { .experience .hero { grid-template-columns:1fr; max-width:760px; } .experience .hero-message h1 { font-size:clamp(3rem,8vw,5rem); } .experience .hero-message p { max-width:55ch; } .experience .attention-section { gap:2.5rem; } }
-@media(max-width:767px) { .experience .hero { padding:2.5rem 1.4rem 4rem; gap:3rem; } .experience .hero-message h1 { font-size:clamp(2.55rem,10vw,4.5rem); } .experience .hero-message .hero-subhead { font-size:1.25rem; } .experience .attention-section { grid-template-columns:1fr; padding-block:4rem; } .experience .how-section ol { grid-template-columns:1fr; gap:3rem; } .experience .truth-section { padding:1rem 1.5rem; } .experience .sample-summary dl div { grid-template-columns:1fr; gap:.5rem; } .motion-toggle { bottom:5rem; } .experience .contract-tabs button { font-size:.875rem; } .terms-run { gap:1.5rem; padding-right:1.5rem; } }
+@media(max-width:767px) { .experience .hero { padding:2.5rem 1.4rem 4rem; gap:3rem; } .experience .hero-message h1 { font-size:clamp(2.55rem,10vw,4.5rem); } .experience .hero-message .hero-subhead { font-size:1.25rem; } .experience .attention-section { grid-template-columns:1fr; padding-block:4rem; } .experience .contract-breadth { grid-template-columns:1fr; } .experience .contract-breadth-list { grid-template-columns:1fr; } .experience .how-section ol { grid-template-columns:1fr; gap:3rem; } .experience .truth-section { padding:1rem 1.5rem; } .experience .sample-summary dl div { grid-template-columns:1fr; gap:.5rem; } .motion-toggle { bottom:5rem; } .experience .contract-tabs button { font-size:.875rem; } .terms-run { gap:1.5rem; padding-right:1.5rem; } }
 @media(prefers-reduced-motion:reduce) { .experience *,.experience *::before,.experience *::after { animation:none !important; transition:none !important; } .experience .headline-line,.experience .hero-message p,.experience .hero-action { opacity:1; transform:none; } .experience .terms-track { width:auto; } .experience .terms-run { flex-wrap:wrap; padding:0 1.5rem; } .experience .terms-run + .terms-run { display:none; } .motion-toggle { display:none; } }
 
 /* Product rename and comfortable navigation. */

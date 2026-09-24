@@ -519,6 +519,8 @@ is legal, illegal, enforceable, or unenforceable. If the answer depends on a
 state, city, rent-control program, or property type not established by the
 document, identify that dependency instead of guessing the governing rule.
 `.trim(),
+    employment_contractor: "Use the cross-contract completeness rules. Pay particular attention to compensation, duties, classification language, term, termination, confidentiality, intellectual property, restrictive covenants, benefits, expenses, dispute terms, and continuing obligations without deciding employment status or enforceability.",
+    service_agreement: "Use the cross-contract completeness rules. Pay particular attention to scope, deliverables, acceptance, revisions, fees, expenses, payment timing, client dependencies, intellectual property, confidentiality, warranties, liability, term, termination, and transition duties.",
     brand_deal: `
 The user selected Brand deal. Pay particular attention to deliverables,
 acceptance and revisions, payment and expenses, content ownership and licenses,
@@ -527,6 +529,9 @@ termination, cancellation and kill fees, name-image-voice-likeness permissions,
 AI or digital-replica permissions, disclosure duties, analytics, morality
 clauses, indemnity, and liability. Describe only the rights stated in the text.
 `.trim(),
+    vendor_purchase: "Use the cross-contract completeness rules. Pay particular attention to goods or services, quantities, pricing, payment, delivery, acceptance, warranties, returns, risk of loss, title, renewal, termination, indemnity, liability, and dispute procedures.",
+    confidentiality: "Use the cross-contract completeness rules. Pay particular attention to what information is covered, exclusions, permitted use, who may receive it, security duties, compelled disclosure, return or destruction, duration, remedies stated in the document, and continuing obligations without deciding enforceability.",
+    coaching_membership: "Use the cross-contract completeness rules. Pay particular attention to program scope, access, scheduling, fees, renewals, cancellation, refunds, participant duties, confidentiality, recordings, intellectual property, community rules, disclaimers, and promised outcomes.",
     insurance_policy: `
 The user selected Insurance policy (early beta). Organize the document without
 deciding whether a real loss or claim is covered. Check the declarations,
