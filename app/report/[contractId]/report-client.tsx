@@ -204,7 +204,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
 
   async function deleteReport(token: string) {
     const confirmed = window.confirm(
-      "Permanently delete this unpaid report? This cannot be undone.",
+      "Permanently delete this report? This cannot be undone.",
     );
     if (!confirmed) return;
 
@@ -363,7 +363,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
                     Payment unlocks the report already prepared for this contract. This private link remains your recovery key.
                   </p>
                   <p className="mt-3 text-sm font-bold text-brand-indigo">
-                    Beta tester? You can add your promo code in secure checkout.
+                    Beta tester? Enter your 100%-off code and confirm the total is $0 before you complete checkout.
                   </p>
                   {state.data.checkout_enabled && state.data.checkout_token ? (
                     <button

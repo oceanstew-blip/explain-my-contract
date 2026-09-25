@@ -12,6 +12,7 @@ import {
 import { getCheckoutEnvironment } from "@/lib/server-env";
 import { canStartCheckout } from "@/lib/payment-status";
 import { checkoutPriceIdForPageCount } from "@/lib/checkout-pricing";
+import { createBetaCheckoutCustomerSettings } from "@/lib/beta-checkout-settings";
 import { createStripe } from "@/lib/stripe";
 import {
   addCalendarYears,
@@ -117,8 +118,7 @@ export async function POST(request: Request): Promise<Response> {
       {
         mode: "payment",
         allow_promotion_codes: true,
-        phone_number_collection: { enabled: false },
-        wallet_options: { link: { display: "never" } },
+        ...createBetaCheckoutCustomerSettings(),
         invoice_creation: { enabled: true },
         client_reference_id: contractId,
         line_items: [{ price: priceId, quantity: 1 }],
