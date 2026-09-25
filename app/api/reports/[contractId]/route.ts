@@ -113,7 +113,8 @@ export async function GET(
       );
     }
 
-    const checkoutEnabled = process.env.STRIPE_CHECKOUT_ENABLED === "true";
+    const freeBetaEnabled = environment.FREE_BETA_ENABLED === "true";
+    const checkoutEnabled = !freeBetaEnabled && process.env.STRIPE_CHECKOUT_ENABLED === "true";
     const includeFullReportPreview =
       process.env.NODE_ENV === "development" &&
       process.env.LOCAL_FULL_REPORT_PREVIEW === "true";
@@ -133,6 +134,7 @@ export async function GET(
         checkoutEnabled,
         checkoutToken,
         reportExpiresAt: contract.report_expires_at,
+        freeBetaEnabled,
         includeFullReportPreview,
       }),
       { headers: { "Cache-Control": "no-store, private" } },

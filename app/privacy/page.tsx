@@ -9,7 +9,7 @@ export default function PrivacyAndSupportPage() {
       <article className="policy-shell">
         <p className="policy-eyebrow">Explain My Contract Now · beta information</p>
         <h1>Before you upload,<br /><em>know the boundaries.</em></h1>
-        <p className="policy-lede">Clear information about your contract, your report, payment, and how to get help.</p>
+        <p className="policy-lede">Clear information about your contract, your report, the free beta, and how to get help.</p>
 
         <section>
           <h2>What this service is</h2>
@@ -26,13 +26,13 @@ export default function PrivacyAndSupportPage() {
         <section>
           <h2>Report links and retention</h2>
           <p>Your report is accessed through a private link. Anyone with that link can open the report, so do not forward it.</p>
-          <p>Current beta defaults: unpaid reports expire after 24 hours; paid reports are retained for at least 30 days after confirmed payment. Payment, refund, and dispute records may be retained longer for accounting and operational requirements.</p>
+          <p>During the free beta, reports expire after 24 hours. Anyone with your private link can open your report during that window, so do not forward it.</p>
         </section>
 
         <section>
-          <h2>Beta payment and refunds</h2>
-          <p>There is no subscription. Any payment is a one-time Checkout payment, and the price is shown before you complete it.</p>
-          <p>If a successful payment does not unlock your report, contact support so we can investigate. Refund requests are handled case-by-case during beta; include the Support ID shown in the product, not your contract or private report link.</p>
+          <h2>Free beta</h2>
+          <p>The first month of beta access is free. We do not ask for payment information or offer checkout during this period.</p>
+          <p>The beta may change or close as we learn from testing. If you have trouble opening a report, contact support with the Support ID shown in the product, not your contract or private report link.</p>
         </section>
 
         <section>

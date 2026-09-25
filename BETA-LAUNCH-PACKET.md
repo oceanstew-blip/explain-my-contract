@@ -1,7 +1,8 @@
 # Explain My Contract Now beta launch packet
 
-Status: staged for the next production deploy. Do not invite testers or run the
-production checkout proof until every checkbox below is complete.
+Status: staged for the next production deploy. The first beta month is free:
+do not invite testers until the free-report flow below has been deployed and
+verified.
 
 ## What testers need to know
 
@@ -16,9 +17,7 @@ are authorized to share it. The original PDF is not retained. Extracted text is
 sent to Gemini for analysis and may be sent to OpenAI if Gemini is unavailable.
 The resulting report is stored temporarily in Supabase and accessed through a
 private link. Anyone with that link can open the report, so it should not be
-forwarded. The product's current defaults are 24 hours for unpaid reports and
-at least 30 days after payment for paid reports; financial records have a
-longer retention period.
+forwarded. During the free beta, reports are available for 24 hours.
 
 For support, contact `support@explainmycontractnow.com`. Do not email a
 contract or a private report link to support. Include the support ID shown in
@@ -26,13 +25,8 @@ an error instead.
 
 ## Decisions that must be made before this copy is customer-facing
 
-- **Refund policy:** choose the exact eligibility, time limit, and request
-  process. The site must not imply a refund promise until this is approved.
 - **Feedback form:** create one owned form and insert its public URL below.
   Do not collect contract files or private report links in the form.
-- **Beta promotion code:** create a unique 100%-off, live-mode promotion code
-  only after the restricted key has been rotated and the product test is
-  scheduled.
 
 ## Tester invitation draft
 
@@ -47,7 +41,8 @@ for this beta.
 
 Use this link: https://explainmycontractnow.com/
 
-At checkout, enter this beta code: `[CODE TO BE ADDED]`.
+The first beta month is free. There is no checkout and we will not ask for
+payment information.
 
 Please do not forward your private report link. If anything breaks, email
 support@explainmycontractnow.com with the Support ID shown on screen; please do
@@ -76,13 +71,18 @@ report link here. This form is for product feedback only.
 
 - [ ] Reports and support mailbox routes are Active in Cloudflare.
 - [ ] `explainmycontractnow.com` is verified in Resend.
-- [ ] Netlify has the new sender and reply-to values, then has redeployed.
-- [ ] Stripe public customer support email is `support@explainmycontractnow.com`.
-- [ ] Production restricted key has been rotated to the minimum required scope;
-  its replacement has been set in Netlify.
-- [ ] A choice about Stripe customer receipts and refund emails is recorded.
-- [ ] Refund policy and feedback-form URL are approved and published.
-- [ ] Explicit approval has been given for one fictional contract and a
-  100%-off production Checkout.
-- [ ] Verify signed webhook, report unlock, exactly one report email, and safe
-  behavior when the webhook is replayed.
+- [ ] The production deploy has `FREE_BETA_ENABLED=true` and
+  `STRIPE_CHECKOUT_ENABLED=false`.
+- [ ] The public beta information page is deployed.
+- [ ] Feedback-form URL is published.
+- [ ] Explicit approval has been given for one fictional-contract production
+  proof.
+- [ ] Verify analysis → private-link full report → 24-hour expiry behavior.
+- [ ] Confirm that no checkout, payment collection, or report email is offered.
+
+## Paid launch work, after the free beta
+
+Keep Stripe disabled until the paid launch is deliberately scheduled. That
+later work includes the restricted-key rotation, public Stripe support email,
+receipt/refund-email decision, written refund policy, one controlled
+100%-off checkout proof, and webhook retry/email idempotency verification.

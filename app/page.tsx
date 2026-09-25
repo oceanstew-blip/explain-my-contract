@@ -247,8 +247,7 @@ function PreviewPanel({
             Your private report link is ready.
           </h3>
           <p className="mt-2 text-sm leading-6 text-brand-canvas">
-            Save this link. It is the key to this report and will show the full
-            analysis after payment. Do not share it.
+            Save this link. It is the key to your full report. Do not share it.
           </p>
           <a
             className="mt-5 inline-flex rounded-full bg-brand-action px-6 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-brand-indigo focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"

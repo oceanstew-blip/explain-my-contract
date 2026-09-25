@@ -61,6 +61,20 @@ describe("report delivery policy", () => {
     expect(delivery.checkout_enabled).toBe(false);
   });
 
+  it("includes the full report for the free beta without treating it as paid", () => {
+    const delivery = createReportDelivery({
+      ...baseInput,
+      paymentStatus: "unpaid",
+      freeBetaEnabled: true,
+    });
+
+    expect(delivery.paid).toBe(false);
+    expect(delivery.free_beta).toBe(true);
+    expect(delivery).toHaveProperty("report", fullReport);
+    expect(delivery.checkout_enabled).toBe(false);
+    expect(delivery).not.toHaveProperty("checkout_token");
+  });
+
   it("includes the full report after payment and stops issuing checkout access", () => {
     const delivery = createReportDelivery({
       ...baseInput,
