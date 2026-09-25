@@ -85,6 +85,11 @@ This runs tests, ESLint, TypeScript, and the production webpack build. GitHub Ac
 
 ## Stripe activation checklist
 
+The customer-facing wording, tester invitation, feedback-form questions, and
+controlled live-proof checklist are in [BETA-LAUNCH-PACKET.md](./BETA-LAUNCH-PACKET.md).
+It deliberately leaves the refund promise, beta code, and feedback-form URL
+blank until their owners have made those product decisions.
+
 The payment code is intentionally unavailable until every item below is complete:
 
 1. Verify the implemented full paid report deliverable in a protected preview.
