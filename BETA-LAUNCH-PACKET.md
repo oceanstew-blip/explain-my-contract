@@ -52,7 +52,7 @@ before you continue; do not complete checkout if it is not.
 Please do not forward your private report link. If anything breaks, email
 support@explainmycontractnow.com with the Support ID shown on screen; please do
 not email your contract or report link. After trying it, leave feedback here:
-`[FEEDBACK FORM URL TO BE ADDED]`.
+https://explainmycontractnow.com/feedback
 
 Thank you — I’m especially interested in what was clear, what felt confusing,
 and whether the report helped you ask better questions.
@@ -79,7 +79,8 @@ report link here. This form is for product feedback only.
 - [ ] The production deploy has `STRIPE_CHECKOUT_ENABLED=true` with the live
   beta Prices and promotion code configured.
 - [ ] The public beta information page is deployed.
-- [ ] Feedback-form URL is published.
+- [ ] Netlify Forms detection is enabled for the site, and one safe test
+  submission is visible in the Forms dashboard.
 - [ ] Explicit approval has been given for one fictional-contract,
   100%-off production Checkout.
 - [ ] Verify that Checkout requires name and email, asks for no phone number,

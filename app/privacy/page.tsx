@@ -38,6 +38,7 @@ export default function PrivacyAndSupportPage() {
         <section>
           <h2>Support and feedback</h2>
           <p>Email <a href="mailto:support@explainmycontractnow.com">support@explainmycontractnow.com</a> for product help. To help us troubleshoot, include the Support ID from the error message and a short description of what happened.</p>
+          <p>After testing, use the <a href="/feedback">beta feedback form</a>. It is collected by our website host; do not paste contract text, upload files, or share a private report link there.</p>
         </section>
 
         <Link className="policy-return" href="/">Back to Explain My Contract Now <span aria-hidden="true">→</span></Link>

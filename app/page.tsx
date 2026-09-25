@@ -1045,7 +1045,7 @@ export default function Home() {
             <Image alt="Tami Stewart Consults" height={124} loading="eager" src="/brand/tami-stewart-consults-logo.svg" width={288} />
             <p>Understand the contract. Know what it means for you.</p>
           </div>
-          <nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><a href="#faq">Common Questions</a><a href="/privacy">Privacy &amp; support</a><a href="https://tamistewartconsults.com">Meet Tami</a></nav>
+          <nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><a href="#faq">Common Questions</a><a href="/privacy">Privacy &amp; support</a><a href="/feedback">Beta feedback</a><a href="https://tamistewartconsults.com">Meet Tami</a></nav>
           <div className="footer-action"><a className="header-cta" href="#upload">Explain My Contract Now</a></div>
         </div>
         <div className="section-shell footer-bottom"><p>Educational—not legal advice.</p></div>
