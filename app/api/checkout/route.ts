@@ -117,6 +117,9 @@ export async function POST(request: Request): Promise<Response> {
       {
         mode: "payment",
         allow_promotion_codes: true,
+        customer_creation: "always",
+        name_collection: { individual: { enabled: true, optional: false } },
+        payment_method_collection: "if_required",
         phone_number_collection: { enabled: false },
         wallet_options: { link: { display: "never" } },
         invoice_creation: { enabled: true },

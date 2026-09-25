@@ -70,7 +70,6 @@ export function getCheckoutEnvironment() {
 
 export function getReportEnvironment() {
   return readEnvironment({
-    FREE_BETA_ENABLED: z.enum(["true", "false"]).default("false"),
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     REPORT_LINK_TOKEN_SECRET: nonEmptyString.min(32).optional(),
     SUPABASE_SECRET_KEY: nonEmptyString,

@@ -86,7 +86,6 @@ type ReportResponse = {
   request_id?: string;
   intent: AnalysisIntent;
   paid: boolean;
-  free_beta?: boolean;
   full_report_preview: boolean;
   payment_status: string;
   checkout_enabled: boolean;
@@ -268,7 +267,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
           <section className="mt-8 overflow-hidden rounded-[1.75rem] border border-brand-border bg-white shadow-xl shadow-brand-indigo/8">
             <header className="bg-brand-indigo px-6 py-8 text-white sm:px-9">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-canvas-deep">
-                {state.data.paid || state.data.free_beta
+                {state.data.paid
                   ? "Your full report"
                   : state.data.full_report_preview
                     ? "Local full report preview"
@@ -357,11 +356,14 @@ export default function ReportClient({ contractId }: { contractId: string }) {
                 <FindingCard item={item} key={`${item.location}-${item.headline}`} />
               ))}
 
-              {!state.data.paid && !state.data.free_beta && !state.data.full_report_preview ? (
+              {!state.data.paid && !state.data.full_report_preview ? (
                 <div className="rounded-2xl bg-brand-canvas-deep px-6 py-6">
                   <h2 className="font-fraunces text-2xl font-semibold text-brand-indigo">Unlock the complete explanation</h2>
                   <p className="mt-2 text-sm leading-6 text-brand-ink">
                     Payment unlocks the report already prepared for this contract. This private link remains your recovery key.
+                  </p>
+                  <p className="mt-3 text-sm font-bold text-brand-indigo">
+                    Beta tester? Enter your 100%-off code and confirm the total is $0 before you complete checkout.
                   </p>
                   {state.data.checkout_enabled && state.data.checkout_token ? (
                     <button
@@ -387,8 +389,8 @@ export default function ReportClient({ contractId }: { contractId: string }) {
                     onClick={() => deleteReport(state.token)}
                   >
                     {deletePending
-                      ? "Deleting report…"
-                      : "Permanently delete this report"}
+                      ? "Deleting unpaid report…"
+                      : "Permanently delete this unpaid report"}
                   </button>
                 </div>
               ) : null}
