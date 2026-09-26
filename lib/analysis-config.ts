@@ -338,10 +338,30 @@ session. Do not invent a refund window ending before the second session or
 list an unstated refund right as a protection. State that the earlier refund
 policy is unspecified and request clarification. A nonrefundability clause
 alone also does not establish acceleration of all future installments.
+Do not recommend "act before the first session" as a refund deadline unless
+the source actually grants a refund before that date. Ask the provider to
+clarify the unstated earlier policy instead. Do not say the user "gives up a
+refund right" when no earlier right is stated.
 A disclaimer of guaranteed outcomes does not eliminate all contractual
 recourse or excuse failure to deliver the promised services. Preserve that
 distinction in both danger and practical-use advice. Do not invent recurring
 fees from a stated fee whose repeat frequency is unspecified.
+
+Different prices for explicitly alternative payment plans are not a contradiction.
+For example, "$1,200 upfront OR three payments of $450, totaling $1,350" is
+consistent: the installment option costs $150 more. Explain the selected-plan
+consequence once as important unless a separate stated penalty or unusual
+restriction creates a greater risk. The absence of acceleration, settlement,
+or discount terms is not itself a risk. Do not also invent a document-quality
+finding, arithmetic error, conflicting total, or price discrepancy. Flag an
+actual arithmetic mismatch only when a plan's stated total differs from the
+sum of that same plan's payments, or the source gives incompatible amounts
+for the same obligation under the same conditions.
+Category checklists are reading prompts, not requirements that every contract
+contain every listed clause. Do not flag absent community rules in a private
+one-to-one service, for example, without a source-based reason they matter.
+Group related uncertainties and avoid duplicating the same issue as both a
+substantive finding and a document-quality finding.
 
 Before returning JSON, perform a completeness pass from the user's perspective.
 Check every referenced exhibit, schedule, policy, guideline, or attachment and
@@ -493,7 +513,7 @@ terms a person needs to understand after signing:
 
 For every identified clause, use legal_gibberish to translate the important
 legal term or clause language into one plain-English sentence. Then write one
-punchy sentence for danger explaining the practical consequence stated by the
+calm sentence for danger explaining the practical consequence stated by the
 contract. Never describe that consequence as proof of a real signature. For
 fix, turn the contract's procedure into an operational next move by
 naming the trigger, deadline, method, recipient, or record to keep when those
@@ -563,7 +583,7 @@ clauses, indemnity, and liability. Describe only the rights stated in the text.
 `.trim(),
     vendor_purchase: "Use the cross-contract completeness rules. Pay particular attention to goods or services, quantities, pricing, payment, delivery, acceptance, warranties, returns, risk of loss, title, renewal, termination, indemnity, liability, and dispute procedures.",
     confidentiality: "Use the cross-contract completeness rules. Pay particular attention to what information is covered, exclusions, permitted use, who may receive it, security duties, compelled disclosure, return or destruction, duration, remedies stated in the document, and continuing obligations without deciding enforceability.",
-    coaching_membership: "Use the cross-contract completeness rules. Pay particular attention to program scope, access, scheduling, fees, renewals, cancellation, refunds, participant duties, confidentiality, recordings, intellectual property, community rules, disclaimers, and promised outcomes.",
+    coaching_membership: "Use the cross-contract completeness rules. Read the stated program scope, access, scheduling, fees, renewals, cancellation, refunds, participant duties, confidentiality, recordings, intellectual property, community rules, disclaimers, and promised outcomes. Include these subjects when present or when a referenced policy is missing; do not create a checklist of absent clauses. In a private one-to-one program, do not invent a community-rules concern. If fees become nonrefundable after a session, do not infer an earlier refund entitlement or deadline: ask for clarification of the earlier policy. Explicitly alternative upfront and installment totals can differ without being contradictory.",
     insurance_policy: `
 The user selected Insurance policy (early beta). Organize the document without
 deciding whether a real loss or claim is covered. Check the declarations,
