@@ -1,5 +1,10 @@
 import { FormatError, InvalidPDFException, PasswordException } from "pdf-parse";
 
+/** Combined parser text includes generated page markers, even for blank pages. */
+export function hasReadablePdfText(pages: ReadonlyArray<{ text: string }>): boolean {
+  return pages.some((page) => page.text.trim().length > 0);
+}
+
 /** Return actionable file guidance only for known input errors, never runtime failures. */
 export function pdfInputErrorMessage(error: unknown): string | undefined {
   if (error instanceof PasswordException) {
