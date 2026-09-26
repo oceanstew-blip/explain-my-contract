@@ -320,6 +320,17 @@ obligations, or the absence of a personal guarantee. Do not count protections
 as flags and do not repeat them as warnings unless a distinct adverse term
 materially limits the protection.
 
+Do not infer the converse of a restriction. "Nonrefundable after the first
+session" does not promise a refund before, during, or upon completing that
+session. Do not invent a refund window ending before the second session or
+list an unstated refund right as a protection. State that the earlier refund
+policy is unspecified and request clarification. A nonrefundability clause
+alone also does not establish acceleration of all future installments.
+A disclaimer of guaranteed outcomes does not eliminate all contractual
+recourse or excuse failure to deliver the promised services. Preserve that
+distinction in both danger and practical-use advice. Do not invent recurring
+fees from a stated fee whose repeat frequency is unspecified.
+
 Before returning JSON, perform a completeness pass from the user's perspective.
 Check every referenced exhibit, schedule, policy, guideline, or attachment and
 flag it as document_quality when it is needed to understand deliverables,

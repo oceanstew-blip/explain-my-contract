@@ -23,6 +23,27 @@ const content = {
 };
 
 describe("report-ready email", () => {
+  it("limits email exposure to three findings and escapes finding content", () => {
+    const email = renderReportReadyEmail({ ...content, findings: [
+      { ...content.findings[0], headline: "<img src=x onerror=alert(1)>", danger: "A & B <script>bad</script>" },
+      ...content.findings,
+      { ...content.findings[0], headline: "Fourth finding stays in the report" },
+    ] });
+    expect(email.html).toContain("&lt;img src=x onerror=alert(1)&gt;");
+    expect(email.html).not.toContain("<script>");
+    expect(email.text).not.toContain("Fourth finding stays in the report");
+    expect(email.html).not.toContain("Fourth finding stays in the report");
+  });
+
+  it("does not imply a contract is safe when no findings are returned", () => {
+    const email = renderReportReadyEmail({ ...content, findings: [] });
+    expect(email.text).toContain("does not guarantee that the contract is risk-free");
+    expect(email.html).toContain("does not guarantee that the contract is risk-free");
+    expect(email.html).toContain("UTC");
+    expect(email.html).toContain("Anyone with this link can access your report");
+    expect(email.html).toContain("support@explainmycontractnow.com");
+  });
+
   it("renders a privacy-limited summary with high-attention items first", () => {
     const email = renderReportReadyEmail(content);
 
