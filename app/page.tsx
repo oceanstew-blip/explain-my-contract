@@ -514,6 +514,16 @@ export default function Home() {
       }
 
       const reportUrl = `/report/${result.contract_id}#token=${encodeURIComponent(result.recovery_token)}`;
+      // A deployment-skew reload during navigation can lose the URL fragment.
+      // Persist access in this tab before leaving the successful upload page.
+      try {
+        window.sessionStorage.setItem(
+          `explain-my-contract:${result.contract_id}`,
+          result.recovery_token,
+        );
+      } catch {
+        // Browsers blocking storage can still use the private fragment link.
+      }
 
       setSubmission({
         status: "success",
