@@ -5,6 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 import { PDFParse } from "pdf-parse";
 import { z } from "zod";
 import { streamAnalysisResponse } from "@/lib/analysis-stream";
+import { pdfInputErrorMessage } from "@/lib/pdf-input-error";
 
 import {
   createAnalysisPreview,
@@ -281,6 +282,10 @@ async function analyzeRequest(request: Request): Promise<Response> {
       const parsedPdf = await parser.getText();
       extractedText = parsedPdf.text.trim();
       pageCount = parsedPdf.total;
+    } catch (error) {
+      const message = pdfInputErrorMessage(error);
+      if (message) return errorResponse(requestId, message, 422);
+      throw error;
     } finally {
       await parser.destroy();
     }
