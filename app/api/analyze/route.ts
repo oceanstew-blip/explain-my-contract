@@ -346,6 +346,7 @@ export async function POST(request: Request): Promise<Response> {
             (value) =>
               validateAnalysisResult(intent, value, {
                 contractText: extractedText,
+                deriveFlagCount: true,
               }),
           );
         },
@@ -431,6 +432,7 @@ export async function POST(request: Request): Promise<Response> {
             (value) =>
               validateAnalysisResult(intent, value, {
                 contractText: extractedText,
+                deriveFlagCount: true,
               }),
           ),
         onInvalidOutput: ({ attempt, error, willRetry }) => {

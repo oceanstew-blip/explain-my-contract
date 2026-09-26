@@ -284,6 +284,24 @@ describe("validateAnalysisResult", () => {
     ).toThrow(/total_flags must equal/i);
   });
 
+  it("derives generated counts without changing the findings", () => {
+    const result = validateAnalysisResult("considering_signing", {
+      ...validResult, total_flags: 9,
+    }, { deriveFlagCount: true });
+    expect(result.total_flags).toBe(2);
+    expect(result.detailed_analysis).toEqual(validResult.detailed_analysis);
+  });
+
+  it("still rejects invalid findings when deriving generated counts", () => {
+    const result = structuredClone(validResult);
+    result.detailed_analysis[0].fix = "x".repeat(501);
+    expect(() => validateAnalysisResult("considering_signing", result,
+      { deriveFlagCount: true })).toThrow();
+    expect(() => validateAnalysisResult("considering_signing", {
+      ...validResult, detailed_analysis: Array(21).fill(validResult.detailed_analysis[0]),
+    }, { deriveFlagCount: true })).toThrow();
+  });
+
   it("deduplicates repeated categories", () => {
     expect(
       validateAnalysisResult("considering_signing", {
