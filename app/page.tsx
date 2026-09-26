@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 
-import { apiErrorMessage } from "@/lib/api-error";
+import { apiErrorMessage, readApiJson } from "@/lib/api-error";
 import { CHECKOUT_PRICE_TIERS } from "@/lib/checkout-pricing";
 import { ANALYSIS_DISCLAIMER_TEXT } from "@/lib/analysis-disclaimer";
 import type { AnalysisIntent } from "@/lib/analysis-intent";
@@ -489,7 +489,7 @@ export default function Home() {
         method: "POST",
         body: formData,
       });
-      const result = (await response.json()) as {
+      const result = (await readApiJson(response, "The analysis service is temporarily unavailable. Please try again. You have not been charged.")) as {
         error?: string;
         request_id?: string;
         contract_id?: string;
