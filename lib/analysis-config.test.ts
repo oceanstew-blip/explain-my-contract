@@ -57,6 +57,15 @@ describe("analysisIntentSchema", () => {
 });
 
 describe("getAnalysisConfig", () => {
+  it("rejects an oversized practical step instead of silently truncating it", () => {
+    const result = structuredClone(validResult);
+    result.detailed_analysis[0].fix = "x".repeat(501);
+    expect(() => validateAnalysisResult("considering_signing", result)).toThrow();
+    result.detailed_analysis[0].fix = "x".repeat(500);
+    expect(validateAnalysisResult("considering_signing", result)
+      .detailed_analysis[0].fix).toHaveLength(500);
+  });
+
   it("selects distinct instructions for the two intents", () => {
     const considering = getAnalysisConfig("considering_signing");
     const signed = getAnalysisConfig("already_signed");
