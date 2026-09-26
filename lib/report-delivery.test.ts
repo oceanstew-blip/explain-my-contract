@@ -43,6 +43,7 @@ describe("report delivery policy", () => {
 
     expect(delivery).not.toHaveProperty("report");
     expect(delivery.full_report_preview).toBe(false);
+    expect(delivery.preview.agreement_snapshot).toEqual(fullReport.agreement_snapshot);
     expect(delivery).toHaveProperty("checkout_token", "checkout-capability");
     expect(JSON.stringify(delivery.preview)).not.toContain("Paid translation");
   });

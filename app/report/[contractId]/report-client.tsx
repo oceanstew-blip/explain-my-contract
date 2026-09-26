@@ -109,6 +109,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
     | { status: "ready"; data: ReportResponse; token: string }
   >({ status: "loading" });
   const [checkoutPending, setCheckoutPending] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [deletePending, setDeletePending] = useState(false);
   const displayedItems = state.status === "ready"
     ? [...(state.data.report?.detailed_analysis ?? state.data.preview.flag_previews)].sort(
@@ -176,6 +177,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
   async function startCheckout(data: ReportResponse) {
     if (!data.checkout_token) return;
     setCheckoutPending(true);
+    setCheckoutError(null);
     try {
       window.sessionStorage.setItem(`explain-my-contract:${contractId}`, state.status === "ready" ? state.token : "");
       const response = await fetch("/api/checkout", {
@@ -193,10 +195,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
       }
       window.location.assign(body.url);
     } catch (error) {
-      setState({
-        status: "error",
-        message: error instanceof Error ? error.message : "Checkout could not be opened.",
-      });
+      setCheckoutError(error instanceof Error ? error.message : "Checkout could not be opened.");
     } finally {
       setCheckoutPending(false);
     }
@@ -288,24 +287,24 @@ export default function ReportClient({ contractId }: { contractId: string }) {
             </header>
 
             <div className="space-y-4 px-5 py-6 sm:px-7">
-              {state.data.report ? (
+              {state.data.preview.agreement_snapshot ? (
                 <section className="rounded-2xl border border-brand-border bg-brand-canvas px-5 py-5">
                   <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-brand-action">The deal at a glance</p>
-                  {state.data.report.agreement_snapshot.reviewed_for ? (
+                  {state.data.preview.agreement_snapshot.reviewed_for ? (
                     <p className="mt-3 text-sm">
                       <strong>{state.data.intent === "considering_signing" ? "Prospective party reviewed:" : "Party reviewed:"}</strong>{" "}
-                      {state.data.report.agreement_snapshot.reviewed_for}
+                      {state.data.preview.agreement_snapshot.reviewed_for}
                     </p>
                   ) : null}
                   <p className="mt-2 text-sm">
-                    <strong>{state.data.report.agreement_snapshot.counterparty_label ?? "Named service provider"}:</strong>{" "}
-                    {state.data.report.agreement_snapshot.provider}
+                    <strong>{state.data.preview.agreement_snapshot.counterparty_label ?? "Named service provider"}:</strong>{" "}
+                    {state.data.preview.agreement_snapshot.provider}
                   </p>
-                  <p className="mt-2 text-sm"><strong>Term:</strong> {state.data.report.agreement_snapshot.term}</p>
+                  <p className="mt-2 text-sm"><strong>Term:</strong> {state.data.preview.agreement_snapshot.term}</p>
                   {[
-                    ["What you get", state.data.report.agreement_snapshot.what_you_get],
-                    ["What you pay", state.data.report.agreement_snapshot.what_you_pay],
-                    ["What you commit to", state.data.report.agreement_snapshot.what_you_commit_to],
+                    ["What you get", state.data.preview.agreement_snapshot.what_you_get],
+                    ["What you pay", state.data.preview.agreement_snapshot.what_you_pay],
+                    ["What you commit to", state.data.preview.agreement_snapshot.what_you_commit_to],
                   ].map(([label, values]) => Array.isArray(values) && values.length ? (
                     <div className="mt-4" key={label as string}>
                       <h2 className="font-fraunces text-lg font-semibold text-brand-indigo">{label as string}</h2>
@@ -365,6 +364,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
                   <p className="mt-3 text-sm font-bold text-brand-indigo">
                     Beta tester? Enter your 100%-off code and confirm the total is $0 before you complete checkout.
                   </p>
+                  {checkoutError ? <p role="alert" className="mt-4 text-sm text-red-900">{checkoutError} Your snapshot is still available. You can try checkout again.</p> : null}
                   {state.data.checkout_enabled && state.data.checkout_token ? (
                     <button
                       className="mt-5 rounded-full bg-brand-action px-6 py-3 text-sm font-bold text-white disabled:opacity-60"

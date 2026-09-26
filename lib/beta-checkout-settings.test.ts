@@ -11,9 +11,7 @@ describe("beta Checkout customer settings", () => {
     });
   });
 
-  it("does not request a payment method when the beta promotion reduces the total to zero", () => {
-    expect(createBetaCheckoutCustomerSettings().payment_method_collection).toBe(
-      "if_required",
-    );
+  it("omits the subscription-only option that Stripe rejects for one-time reports", () => {
+    expect(createBetaCheckoutCustomerSettings()).not.toHaveProperty("payment_method_collection");
   });
 });
