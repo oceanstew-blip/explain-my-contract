@@ -65,7 +65,7 @@ const MAX_EXTRACTED_CHARACTERS = 750_000;
 // Netlify allows 60 seconds for a synchronous function. Keep both providers
 // inside that shared window, with enough time left to persist the report.
 // Leave persistence/response headroom inside Netlify's 60-second limit.
-const GEMINI_FALLBACK_TIMEOUT_MS = 8_000;
+const GEMINI_FALLBACK_TIMEOUT_MS = 10_000;
 const OPENAI_FALLBACK_TIMEOUT_MS = 45_000;
 
 function sanitizeFileName(name: string): string {
