@@ -145,9 +145,9 @@ describe("getAnalysisConfig", () => {
   it("gives pre-signing fixes a distinct decision job", () => {
     const prompt = getAnalysisConfig("considering_signing").systemPrompt;
 
-    expect(prompt).toMatch(/concrete pre-signing move/i);
-    expect(prompt).toMatch(/language, limit,\s+clarification, or document/i);
-    expect(prompt).toMatch(/reason\s+it resolves the identified concern/i);
+    expect(prompt).toMatch(/focused question, clarification, or document/i);
+    expect(prompt).toMatch(/Do not draft replacement clauses/i);
+    expect(prompt).toMatch(/Silence does not grant either party permission/i);
   });
 
   it("requires a cross-contract completeness and balance pass", () => {

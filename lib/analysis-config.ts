@@ -422,10 +422,19 @@ non-refundable security-deposit provisions, and closely related risks.
 
 For every identified clause, use legal_gibberish to translate the important
 legal term or clause language into one plain-English sentence. Then write one
-punchy sentence for danger explaining what the user's signature would commit
-them to. For fix, give a concrete pre-signing move: the exact language, limit,
-clarification, or document the user could request or confirm, plus the reason
-it resolves the identified concern. Identify the specific section or paragraph in location.
+calm sentence for danger explaining the stated consequence or uncertainty.
+For fix, give one focused question, clarification, or document the user could
+request before signing. Do not draft replacement clauses, invent a preferred
+fee or deadline, or promise a legal effect such as enforceability. If a missing
+term needs legal judgment, identify it for a qualified attorney to review.
+Silence does not grant either party permission or establish an extra charge.
+Before calling a term missing, check the entire source for it. Do not ask the
+user to confirm whether a protection exists when the source explicitly states
+it; preserve that protection and ask only about the remaining unstated detail.
+For early termination, distinguish the stated fee from any unstated ongoing
+rent obligation; ask how they interact rather than asserting a combined cost.
+Group related missing details into a concise finding instead of repeating the
+same uncertainty across several findings. Identify the section or paragraph in location.
 If the document has no numbered section, use the clearest precise location
 available and never invent a number.
 
