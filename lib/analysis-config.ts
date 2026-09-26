@@ -659,7 +659,7 @@ function normalizeExecutionClaims(
 export function validateAnalysisResult(
   intent: AnalysisIntent,
   value: unknown,
-  context?: { contractText?: string },
+  context?: { contractText?: string; deriveFlagCount?: boolean },
 ) {
   const candidateWithoutNotice =
     intent === "already_signed" &&
@@ -672,7 +672,15 @@ export function validateAnalysisResult(
           ),
         )
       : value;
-  const candidate = addLegacyAttentionLevels(candidateWithoutNotice);
+  let candidate = addLegacyAttentionLevels(candidateWithoutNotice);
+  // Generated counts are redundant metadata. Validate every finding below,
+  // but compute its count locally instead of regenerating a complete report.
+  // Stored reports retain the strict count-consistency check by default.
+  if (context?.deriveFlagCount && typeof candidate === "object" &&
+      candidate !== null && !Array.isArray(candidate) &&
+      "detailed_analysis" in candidate && Array.isArray(candidate.detailed_analysis)) {
+    candidate = { ...candidate, total_flags: candidate.detailed_analysis.length };
+  }
   const result = modelResultSchema.parse(candidate);
   const normalizedResult = normalizeExecutionClaims({
     ...result,
