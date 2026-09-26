@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Script from "next/script";
 
 import { apiErrorMessage, readApiJson } from "@/lib/api-error";
+import { readAnalysisResponse } from "@/lib/analysis-stream";
 import { CHECKOUT_PRICE_TIERS } from "@/lib/checkout-pricing";
 import { ANALYSIS_DISCLAIMER_TEXT } from "@/lib/analysis-disclaimer";
 import type { AnalysisIntent } from "@/lib/analysis-intent";
@@ -485,10 +486,11 @@ export default function Home() {
     setSubmission({ status: "submitting", intent });
 
     try {
-      const response = await fetch("/api/analyze", {
+      const response = await readAnalysisResponse(await fetch("/api/analyze", {
         method: "POST",
+        headers: { Accept: "application/x-ndjson" },
         body: formData,
-      });
+      }));
       const result = (await readApiJson(response, "The analysis service is temporarily unavailable. Please try again. You have not been charged.")) as {
         error?: string;
         request_id?: string;

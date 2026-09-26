@@ -4,6 +4,7 @@ import "pdf-parse/worker";
 import { GoogleGenAI } from "@google/genai";
 import { PDFParse } from "pdf-parse";
 import { z } from "zod";
+import { streamAnalysisResponse } from "@/lib/analysis-stream";
 
 import {
   createAnalysisPreview,
@@ -102,6 +103,27 @@ function rateLimitResponse(
 }
 
 export async function POST(request: Request): Promise<Response> {
+  if (request.headers.get("accept")?.includes("application/x-ndjson")) {
+    const requestId = getRequestId(request.headers);
+    const headers = new Headers(request.headers);
+    headers.set("x-request-id", requestId);
+    const streamedRequest = new Request(request.url, {
+      method: request.method,
+      headers,
+      body: request.body,
+      // Node requires duplex when forwarding a streaming request body.
+      duplex: "half",
+    } as RequestInit);
+    return streamAnalysisResponse(
+      (signal) => analyzeRequest(new Request(streamedRequest, { signal })),
+      request.signal,
+      requestId,
+    );
+  }
+  return analyzeRequest(request);
+}
+
+async function analyzeRequest(request: Request): Promise<Response> {
   const requestId = getRequestId(request.headers);
   const contentType = request.headers.get("content-type") ?? "";
 
