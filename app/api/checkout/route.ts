@@ -136,7 +136,9 @@ export async function POST(request: Request): Promise<Response> {
           },
         },
       },
-      { idempotencyKey: `contract-checkout:${contractId}:${version}` },
+      // Keep retries stable while separating the corrected one-time payload
+      // from cached failures created with the old subscription-only option.
+      { idempotencyKey: `contract-checkout:v2:${contractId}:${version}` },
     );
 
     if (!checkout.url) throw new Error("Stripe did not return a checkout URL.");
