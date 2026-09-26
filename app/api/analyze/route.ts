@@ -5,7 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 import { PDFParse } from "pdf-parse";
 import { z } from "zod";
 import { streamAnalysisResponse } from "@/lib/analysis-stream";
-import { pdfInputErrorMessage } from "@/lib/pdf-input-error";
+import { hasReadablePdfText, pdfInputErrorMessage } from "@/lib/pdf-input-error";
 
 import {
   createAnalysisPreview,
@@ -276,11 +276,13 @@ async function analyzeRequest(request: Request): Promise<Response> {
 
     const parser = new PDFParse({ data: pdfBytes });
     let extractedText: string;
+    let hasDocumentText: boolean;
     let pageCount: number;
 
     try {
       const parsedPdf = await parser.getText();
       extractedText = parsedPdf.text.trim();
+      hasDocumentText = hasReadablePdfText(parsedPdf.pages);
       pageCount = parsedPdf.total;
     } catch (error) {
       const message = pdfInputErrorMessage(error);
@@ -298,10 +300,10 @@ async function analyzeRequest(request: Request): Promise<Response> {
       );
     }
 
-    if (!extractedText) {
+    if (!hasDocumentText) {
       return errorResponse(
         requestId,
-        "No readable text was found. This PDF may be scanned or image-only.",
+        "No readable text was found. This PDF may be blank, scanned, or image-only. Export a PDF with selectable text, or use text recognition (OCR) and upload the new copy.",
         422,
       );
     }

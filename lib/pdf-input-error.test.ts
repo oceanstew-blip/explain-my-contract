@@ -2,9 +2,26 @@ import "pdf-parse/worker";
 import { readFileSync } from "node:fs";
 import { FormatError, InvalidPDFException, PasswordException, PDFParse } from "pdf-parse";
 import { describe, expect, it } from "vitest";
-import { pdfInputErrorMessage } from "./pdf-input-error";
+import { hasReadablePdfText, pdfInputErrorMessage } from "./pdf-input-error";
 
 describe("PDF upload recovery", () => {
+  it("rejects an actual blank PDF despite the parser's generated page markers", async () => {
+    const data = new Uint8Array(readFileSync(new URL("./fixtures/blank-page-test.pdf", import.meta.url)));
+    const parser = new PDFParse({ data, verbosity: 0 });
+    try {
+      const result = await parser.getText();
+      expect(result.text.trim()).not.toBe("");
+      expect(hasReadablePdfText(result.pages)).toBe(false);
+    } finally {
+      await parser.destroy();
+    }
+  });
+
+  it("accepts document text on a later page and ignores whitespace-only pages", () => {
+    expect(hasReadablePdfText([{ text: " \n\t" }, { text: "Fictional contract: fee $100." }])).toBe(true);
+    expect(hasReadablePdfText([{ text: " \n\t" }, { text: "\u00a0" }])).toBe(false);
+  });
+
   it("identifies a real parser failure for a damaged file with a valid PDF header", async () => {
     const parser = new PDFParse({ data: new TextEncoder().encode("%PDF-1.7\nThis fictional file is intentionally damaged.\n%%EOF"), verbosity: 0 });
     try {
