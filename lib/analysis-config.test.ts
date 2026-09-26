@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   getAnalysisConfig,
   INFORMATIONAL_NOTICE,
+  toGeminiAnalysisSchema,
   validateAnalysisResult,
 } from "./analysis-config";
 import { analysisIntentSchema } from "./analysis-intent";
@@ -57,6 +58,47 @@ describe("analysisIntentSchema", () => {
 });
 
 describe("getAnalysisConfig", () => {
+  it("keeps model category limits aligned with report validation", () => {
+    const schema = getAnalysisConfig("considering_signing").jsonSchema;
+    const maximum = schema.properties.categories_found.items.maxLength;
+    const result = structuredClone(validResult);
+    result.categories_found = ["x".repeat(maximum)];
+    expect(validateAnalysisResult("considering_signing", result).categories_found[0])
+      .toHaveLength(maximum);
+    result.categories_found = ["x".repeat(maximum + 1)];
+    expect(() => validateAnalysisResult("considering_signing", result)).toThrow();
+  });
+
+  it("adapts nested string limits for Gemini without mutating the strict schema", () => {
+    const source = {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        categories: {
+          type: "array", maxItems: 10,
+          items: { type: "string", minLength: 1, maxLength: 100, description: "Category label." },
+        },
+      },
+      required: ["categories"],
+    };
+    const original = structuredClone(source);
+    expect(toGeminiAnalysisSchema(source)).toEqual({
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        categories: {
+          type: "array", maxItems: 10,
+          items: { type: "string", description: "Category label. Maximum 100 characters; keep comfortably below this limit." },
+        },
+      },
+      required: ["categories"],
+    });
+    expect(source).toEqual(original);
+    const config = getAnalysisConfig("considering_signing");
+    expect(JSON.stringify(config.geminiJsonSchema)).not.toMatch(/"(?:min|max)Length"/);
+    expect(JSON.stringify(config.jsonSchema)).toContain('"maxLength":100');
+  });
+
   it("rejects an oversized practical step instead of silently truncating it", () => {
     const result = structuredClone(validResult);
     result.detailed_analysis[0].fix = "x".repeat(501);
