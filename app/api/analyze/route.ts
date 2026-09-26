@@ -360,7 +360,7 @@ async function analyzeRequest(request: Request): Promise<Response> {
               temperature: 0,
               maxOutputTokens: 8_000,
               responseMimeType: "application/json",
-              responseJsonSchema: analysisConfig.jsonSchema,
+              responseJsonSchema: analysisConfig.geminiJsonSchema,
             },
           });
 
