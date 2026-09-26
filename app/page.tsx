@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Script from "next/script";
 
 import { apiErrorMessage } from "@/lib/api-error";
+import { CHECKOUT_PRICE_TIERS } from "@/lib/checkout-pricing";
 import { ANALYSIS_DISCLAIMER_TEXT } from "@/lib/analysis-disclaimer";
 import type { AnalysisIntent } from "@/lib/analysis-intent";
 import {
@@ -610,6 +611,7 @@ export default function Home() {
                 Explain My Contract Now <span aria-hidden="true">→</span>
               </a>
             </div>
+            <p className="hero-pricing"><strong>Free snapshot.</strong> Full reports from $5 USD. One-time payment, based on page count. <a href="#pricing">See all four prices →</a></p>
             <p className="trust-line">Private report link. Automatically expires. Educational, not legal advice.</p>
           </div>
 
@@ -779,10 +781,44 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="pricing-section section-shell" id="pricing" aria-labelledby="pricing-heading">
+          <div className="section-heading">
+            <span className="section-eyebrow">Simple, one-time pricing</span>
+            <h2 id="pricing-heading">Start free.<br /><em>Go deeper when you need to.</em></h2>
+            <p>See your contract snapshot for free. Choose the full report for clause explanations, what deserves attention, and practical questions to ask.</p>
+          </div>
+          <div className="pricing-options">
+            <article className="pricing-option">
+              <h3>Free snapshot</h3>
+              <p className="pricing-amount">$0 <span>USD</span></p>
+              <p>Your agreement at a glance, with a preview of the clauses flagged for attention.</p>
+            </article>
+            <article className="pricing-option pricing-option-full">
+              <h3>Full report</h3>
+              <dl className="pricing-tiers">
+                {CHECKOUT_PRICE_TIERS.map(({ tier, pages, amount }) => (
+                  <div key={tier}><dt>{pages}</dt><dd>${amount} <span>USD</span></dd></div>
+                ))}
+              </dl>
+              <p>The same full report at every price. Your PDF’s page count determines the price at checkout.</p>
+            </article>
+          </div>
+          <div className="pricing-action"><p>One payment per contract. No subscription.<br />Review your snapshot before choosing to pay.</p><a className="primary-cta" href="#upload">Start with a free snapshot <span aria-hidden="true">→</span></a></div>
+        </section>
+
         <section className="upload-zone section-shell" id="upload">
           <div className="upload-heading" data-reveal>
             <h2>Explain My Contract Now</h2>
             <p>{REVIEW_ONLY ? "This public preview is for reviewing the experience. Contract uploads are intentionally disabled." : `${isAlreadySigned ? "Upload the contract you already signed." : "Upload the contract you are considering signing."} PDF only, 10 MB maximum.`}</p>
+            <div className="upload-pricing">
+              <p><strong>Free snapshot.</strong> Full report prices (USD):</p>
+              <dl className="pricing-compact">
+                {CHECKOUT_PRICE_TIERS.map(({ tier, pages, amount }) => (
+                  <div key={tier}><dt>{pages}</dt><dd>${amount}</dd></div>
+                ))}
+              </dl>
+              <p>One payment per contract. No subscription.</p>
+            </div>
             {!REVIEW_ONLY ? <p className="upload-breadth">Your contract does not need to fit a category. Choose “Another kind of contract” if you do not see an exact match.</p> : null}
           </div>
 
@@ -1029,6 +1065,7 @@ export default function Home() {
         <section className="faq-section section-shell" data-reveal id="faq">
           <div className="section-heading"><h2>Frequently asked questions</h2></div>
           <div className="faq-list">
+            <details><summary>How much does it cost?</summary><p>Your initial contract snapshot is free. Full report prices in USD:</p><dl className="pricing-compact">{CHECKOUT_PRICE_TIERS.map(({ tier, pages, amount }) => (<div key={tier}><dt>{pages}</dt><dd>${amount}</dd></div>))}</dl><p>Every price includes the same full report; the price depends on your PDF’s page count. You pay once per contract, with no subscription, and can review your snapshot before choosing to purchase the full report.</p></details>
             <details><summary>Is this legal advice?</summary><p>No. The report is educational and designed to help you understand the language and structure of your contract. It is not a substitute for advice from a qualified attorney.</p></details>
             <details><summary>Will it tell me whether I should sign?</summary><p>No. It helps you understand the terms, obligations, deadlines, restrictions, and other provisions so you can decide what questions you want answered.</p></details>
             <details><summary>Can I use it if I already signed?</summary><p>Yes. The report can help you understand what the contract says, identify obligations or deadlines that may still matter, and spot terms to research or discuss with an attorney.</p></details>
@@ -1045,7 +1082,7 @@ export default function Home() {
             <Image alt="Tami Stewart Consults" height={124} loading="eager" src="/brand/tami-stewart-consults-logo.svg" width={288} />
             <p>Understand the contract. Know what it means for you.</p>
           </div>
-          <nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><a href="#faq">Common Questions</a><a href="/privacy">Privacy &amp; support</a><a href="/feedback">Beta feedback</a><a href="https://tamistewartconsults.com">Meet Tami</a></nav>
+          <nav aria-label="Footer navigation"><a href="#pricing">Pricing</a><a href="#how-it-works">How It Works</a><a href="#faq">Common Questions</a><a href="/privacy">Privacy &amp; support</a><a href="/feedback">Beta feedback</a><a href="https://tamistewartconsults.com">Meet Tami</a></nav>
           <div className="footer-action"><a className="header-cta" href="#upload">Explain My Contract Now</a></div>
         </div>
         <div className="section-shell footer-bottom"><p>Educational—not legal advice.</p></div>

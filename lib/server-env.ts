@@ -62,6 +62,8 @@ export function getCheckoutEnvironment() {
     STRIPE_CHECKOUT_ENABLED: z.literal("true"),
     STRIPE_PRICE_ID_SHORT: nonEmptyString.startsWith("price_"),
     STRIPE_PRICE_ID_STANDARD: nonEmptyString.startsWith("price_"),
+    STRIPE_PRICE_ID_EXTENDED: nonEmptyString.startsWith("price_"),
+    STRIPE_PRICE_ID_LONG: nonEmptyString.startsWith("price_"),
     STRIPE_SECRET_KEY: nonEmptyString.regex(/^(sk|rk)_/),
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     SUPABASE_SECRET_KEY: nonEmptyString,

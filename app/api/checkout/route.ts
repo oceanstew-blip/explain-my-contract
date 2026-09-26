@@ -113,6 +113,8 @@ export async function POST(request: Request): Promise<Response> {
     const priceId = checkoutPriceIdForPageCount(contract.page_count, {
       short: environment.STRIPE_PRICE_ID_SHORT,
       standard: environment.STRIPE_PRICE_ID_STANDARD,
+      extended: environment.STRIPE_PRICE_ID_EXTENDED,
+      long: environment.STRIPE_PRICE_ID_LONG,
     });
     const checkout = await stripe.checkout.sessions.create(
       {
