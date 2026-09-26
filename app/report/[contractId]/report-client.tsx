@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { apiErrorMessage } from "@/lib/api-error";
+import { apiErrorMessage, readApiJson } from "@/lib/api-error";
 import type { AnalysisIntent } from "@/lib/analysis-intent";
 
 type AnalysisItem = {
@@ -147,7 +147,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
           cache: "no-store",
           signal: controller.signal,
         });
-        const body = (await response.json()) as ReportResponse;
+        const body = (await readApiJson(response, "Your report could not be loaded. Please refresh and try again.")) as ReportResponse;
         if (!response.ok) {
           throw new Error(
             apiErrorMessage(body, "The report could not be opened."),
@@ -185,7 +185,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contract_id: contractId, checkout_token: data.checkout_token }),
       });
-      const body = (await response.json()) as {
+      const body = (await readApiJson(response, "The service is temporarily unavailable. Please try again.")) as {
         error?: string;
         request_id?: string;
         url?: string;
@@ -216,7 +216,7 @@ export default function ReportClient({ contractId }: { contractId: string }) {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
-      const body = (await response.json()) as {
+      const body = (await readApiJson(response, "The service is temporarily unavailable. Please try again.")) as {
         deleted?: boolean;
         error?: string;
         request_id?: string;

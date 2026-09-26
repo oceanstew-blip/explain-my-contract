@@ -323,6 +323,9 @@ export async function POST(request: Request): Promise<Response> {
             config: {
               abortSignal: request.signal,
               httpOptions: {
+                // The SDK otherwise retries up to five times internally,
+                // consuming the time reserved for the independent fallback.
+                retryOptions: { attempts: 1 },
                 timeout: environment.OPENAI_API_KEY
                   ? Math.min(
                       environment.GEMINI_REQUEST_TIMEOUT_MS,
@@ -399,6 +402,11 @@ export async function POST(request: Request): Promise<Response> {
       });
 
       const openAIApiKey = environment.OPENAI_API_KEY;
+      // Schema retries share one fallback budget rather than restarting it.
+      const fallbackSignal = AbortSignal.any([
+        request.signal,
+        AbortSignal.timeout(OPENAI_FALLBACK_TIMEOUT_MS),
+      ]);
       validatedResult = await generateAndValidateOpenAIAnalysis({
         generate: () =>
           generateOpenAIAnalysis({
@@ -409,7 +417,7 @@ export async function POST(request: Request): Promise<Response> {
             contractText: extractedText,
             jsonSchema: analysisConfig.jsonSchema,
             requestId,
-            requestSignal: request.signal,
+            requestSignal: fallbackSignal,
             timeoutMs: Math.min(
               environment.OPENAI_REQUEST_TIMEOUT_MS,
               OPENAI_FALLBACK_TIMEOUT_MS,
