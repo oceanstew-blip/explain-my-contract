@@ -97,6 +97,11 @@ describe("OpenAI contract analysis fallback", () => {
     ).resolves.toEqual({ ok: true });
 
     expect(generate).toHaveBeenCalledTimes(2);
+    expect(generate).toHaveBeenNthCalledWith(1, "");
+    expect(generate).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("under 350 characters each"),
+    );
     expect(onInvalidOutput).toHaveBeenCalledWith(
       expect.objectContaining({ attempt: 1, willRetry: true }),
     );

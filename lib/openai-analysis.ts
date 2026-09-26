@@ -105,7 +105,7 @@ export async function generateOpenAIAnalysis(options: {
 }
 
 export async function generateAndValidateOpenAIAnalysis<T>(options: {
-  generate: () => Promise<string>;
+  generate: (retryInstruction: string) => Promise<string>;
   validate: (output: string) => T;
   onInvalidOutput?: (details: {
     attempt: number;
@@ -115,7 +115,11 @@ export async function generateAndValidateOpenAIAnalysis<T>(options: {
 }): Promise<T> {
   const maxAttempts = 3;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const output = await options.generate();
+    const output = await options.generate(
+      attempt === 1
+        ? ""
+        : "The previous response failed report validation. Return a fresh, complete JSON report matching every schema constraint and the output length limits. Keep explanations and practical steps under 350 characters each. Check total_flags against detailed_analysis.length. Preserve source facts and uncertainty; do not invent or truncate terms.",
+    );
     try {
       return options.validate(output);
     } catch (error) {

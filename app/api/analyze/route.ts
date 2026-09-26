@@ -408,12 +408,14 @@ export async function POST(request: Request): Promise<Response> {
         AbortSignal.timeout(OPENAI_FALLBACK_TIMEOUT_MS),
       ]);
       validatedResult = await generateAndValidateOpenAIAnalysis({
-        generate: () =>
+        generate: (retryInstruction) =>
           generateOpenAIAnalysis({
             apiKey: openAIApiKey,
             model: environment.OPENAI_MODEL,
             systemPrompt: analysisConfig.systemPrompt,
-            userInstruction: analysisConfig.userInstruction,
+            userInstruction: [analysisConfig.userInstruction, retryInstruction]
+              .filter(Boolean)
+              .join("\n\n"),
             contractText: extractedText,
             jsonSchema: analysisConfig.jsonSchema,
             requestId,
