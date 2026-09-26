@@ -93,9 +93,9 @@ blank until their owners have made those product decisions.
 The payment code is intentionally unavailable until every item below is complete:
 
 1. Verify the implemented full paid report deliverable in a protected preview.
-2. Create a Stripe Product with one-time Prices for short (1–5 page) and standard (6+ page) contracts in test mode.
+2. Create a Stripe Product with one-time Prices for short (1–5 pages, $5 USD), standard (6–12 pages, $12 USD), extended (13–25 pages, $22 USD), and long (26+ pages, $28 USD) contracts in test mode.
 3. Create a test-mode Coupon and customer-facing Promotion Code for beta testers. Checkout Sessions accept active promotion codes at the Stripe-hosted checkout page.
-4. Set `STRIPE_PRICE_ID_SHORT`, `STRIPE_PRICE_ID_STANDARD`, `STRIPE_SECRET_KEY`, and a 32+ character `CHECKOUT_TOKEN_SECRET`.
+4. Set `STRIPE_PRICE_ID_SHORT`, `STRIPE_PRICE_ID_STANDARD`, `STRIPE_PRICE_ID_EXTENDED`, `STRIPE_PRICE_ID_LONG`, `STRIPE_SECRET_KEY`, and a 32+ character `CHECKOUT_TOKEN_SECRET`.
 5. Register `/api/stripe/webhook`, subscribe it to the required events below, and set `STRIPE_WEBHOOK_SECRET`.
 6. Apply the payment-state migration and verify its functions and RLS/grants.
 7. Test full-price and 100%-discount checkouts plus successful, duplicate, delayed, failed, and tampered webhook cases in Stripe test mode.
@@ -122,3 +122,18 @@ Required webhook events:
 This application should live in its own private GitHub repository, not inside an unrelated repository. A deployment platform can then import that repository and receive secrets through its environment-variable settings. GitHub stores code and history; it does not store the production database, Stripe account, or secret values.
 
 See [BACKEND-AUDIT.md](./BACKEND-AUDIT.md) for the current risk assessment and remaining launch blockers.
+
+### Four-tier pricing release
+
+Production Stripe configuration was completed September 26, 2026 on the existing Full Report product (`prod_VJezU11yNBJwaz`). The existing $5 and $12 price IDs were preserved; the $12 description now says 6–12 pages. New one-time USD prices were created and saved to the production context of Netlify project `explain-my-contract-review`:
+
+| Environment variable | Pages | USD | Stripe Price ID |
+| --- | --- | --- | --- |
+| `STRIPE_PRICE_ID_SHORT` | 1–5 | $5 | `price_1UJ1f8HLVXvVtMZaHbpF4VJq` |
+| `STRIPE_PRICE_ID_STANDARD` | 6–12 | $12 | `price_1UJ1fZHLVXvVtMZa4dmfzG8p` |
+| `STRIPE_PRICE_ID_EXTENDED` | 13–25 | $22 | `price_1UJwIWHLVXvVtMZa1qq8Uxp9` |
+| `STRIPE_PRICE_ID_LONG` | 26+ | $28 | `price_1UJwJ1HLVXvVtMZafTRJDyLb` |
+
+Using the same product preserves product-restricted beta-code eligibility. Missing price configuration makes checkout/readiness fail closed. The four-tier application code still requires deployment before these ranges are live. Deploy-preview configuration still uses test-mode prices and needs its own new test-mode tiers; do not copy live price IDs into deploy previews. No Checkout orders or customer emails were created during this configuration step.
+
+Existing open Checkout Sessions retain their previously quoted price until they expire; new sessions use the four tiers. No existing sessions are cancelled by this release.
