@@ -822,15 +822,6 @@ export default function Home() {
           <div className="upload-heading" data-reveal>
             <h2>Explain My Contract Now</h2>
             <p>{REVIEW_ONLY ? "This public preview is for reviewing the experience. Contract uploads are intentionally disabled." : `${isAlreadySigned ? "Upload the contract you already signed." : "Upload the contract you are considering signing."} PDF only, 10 MB maximum.`}</p>
-            <div className="upload-pricing">
-              <p><strong>Free snapshot.</strong> Full report prices (USD):</p>
-              <dl className="pricing-compact">
-                {CHECKOUT_PRICE_TIERS.map(({ tier, pages, amount }) => (
-                  <div key={tier}><dt>{pages}</dt><dd>${amount}</dd></div>
-                ))}
-              </dl>
-              <p>One payment per contract. No subscription.</p>
-            </div>
             {!REVIEW_ONLY ? <p className="upload-breadth">Your contract does not need to fit a category. Choose “Another kind of contract” if you do not see an exact match.</p> : null}
           </div>
 
@@ -1045,6 +1036,17 @@ export default function Home() {
           </div>
         ) : null}
 
+        <div className="upload-heading mt-8">
+          <div className="upload-pricing">
+            <p><strong>Free snapshot.</strong> Full report prices (USD):</p>
+            <dl className="pricing-compact">
+              {CHECKOUT_PRICE_TIERS.map(({ tier, pages, amount }) => (
+                <div key={tier}><dt>{pages}</dt><dd>${amount}</dd></div>
+              ))}
+            </dl>
+            <p>One payment per contract. No subscription.</p>
+          </div>
+        </div>
         </section>
 
         <section className="how-section section-shell" data-reveal id="how-it-works">
